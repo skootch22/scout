@@ -333,58 +333,10 @@
   <!-- Report -->
   <div id="report"></div>
 
-  <!-- Batting Panel -->
-  <div class="card" id="battingPanel" style="display:none">
-    <div class="panel-header">
-      <div class="panel-title">
-        <span class="section-label" id="battingLabel" style="margin-bottom:0">Batting — Game Log</span>
-        <span class="panel-badge batting">Batting</span>
-      </div>
-      <button class="refresh-btn" id="refreshBtn" onclick="reloadCurrentTeam()">↻ Refresh</button>
-    </div>
 
-    <!-- Season Summary -->
-    <div class="summary-wrap" id="battingSummaryWrap" style="display:none">
-      <div class="summary-section-label season-lbl">📊 Season</div>
-      <div class="batting-summary" id="battingSummary">
-        <div class="bsum-item"><div class="bsum-label">Team AVG</div><div class="bsum-value" id="sumAVG">—</div><div class="bsum-sub" id="sumGames"></div></div>
-        <div class="bsum-item"><div class="bsum-label">Team OBP</div><div class="bsum-value" id="sumOBP">—</div></div>
-        <div class="bsum-item"><div class="bsum-label">SO / BB</div><div class="bsum-value" id="sumSOBB">—</div></div>
-      </div>
-    </div>
-
-    <!-- Common Opponent Summary -->
-    <div class="summary-wrap" id="commonSummaryWrap" style="display:none">
-      <div class="summary-section-label common-lbl">🎯 Common Opponent — <span id="commonOppNameHeader"></span></div>
-      <div class="batting-summary common-summary" id="commonSummary">
-        <div class="bsum-item"><div class="bsum-label">AVG vs.</div><div class="bsum-value" id="coAVG">—</div><div class="bsum-sub" id="coGames"></div></div>
-        <div class="bsum-item"><div class="bsum-label">OBP vs.</div><div class="bsum-value" id="coOBP">—</div></div>
-        <div class="bsum-item"><div class="bsum-label">SO/BB vs.</div><div class="bsum-value" id="coSOBB">—</div></div>
-      </div>
-    </div>
-
-    <div id="noCommonNotice" class="no-common-notice" style="display:none;margin-bottom:14px;">
-      ⓘ No games marked as Common Opponent yet. Set Common = 1 in your batting tab to enable this section.
-    </div>
-
-    <!-- Trend charts -->
-    <div class="charts-section" id="chartsSection" style="display:none">
-      <div class="charts-label">Per-Game Trends</div>
-      <div class="charts-grid">
-        <div class="chart-wrap"><div class="chart-title">Batting Average</div><canvas id="chartAVG"></canvas></div>
-        <div class="chart-wrap"><div class="chart-title">On-Base Percentage</div><canvas id="chartOBP"></canvas></div>
-        <div class="chart-wrap"><div class="chart-title">SO / BB Ratio</div><canvas id="chartSOBB"></canvas></div>
-      </div>
-    </div>
-
-    <div id="battingNotice" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--blue);opacity:.6;padding-top:10px;line-height:1.6;">
-      ⓘ No batting tab found. Add a tab named "<span id="expectedBattingTab"></span>" to your sheet.
-    </div>
-  </div>
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 'use strict';
 
@@ -392,7 +344,6 @@ let pitchers    = [];
 let games       = [];
 let currentTeam = '';
 let sheetId     = '11RIKkgh2hpozY3boJ6iqK_XA9-iurofS7Z5ZyECCa8A'; // hardcoded
-let chartInstances = {};
 
 const $ = id => document.getElementById(id);
 
@@ -552,7 +503,6 @@ function commonOpponentName(gs) {
 async function selectTeam(team) {
   currentTeam = team;
   setStatus('loading', `Loading ${team}…`);
-  if ($('refreshBtn')) $('refreshBtn').disabled = true;
 
   const pitchTab = `${team} - Pitching`;
   const batTab   = `${team} - Batting`;
@@ -575,10 +525,9 @@ async function selectTeam(team) {
 
   renderBattingPanel(true);
 
-  ['battingPanel'].forEach(id => {
+  [].forEach(id => {
     $(id).style.display = 'block';
   });
-  $('battingLabel').textContent  = `Batting — ${team}`;
 
   const parts = [];
   if (pitchers.length) parts.push(`${pitchers.length} pitchers`);
@@ -587,11 +536,9 @@ async function selectTeam(team) {
   if (!pitchers.length && !games.length) {
     const detail = pitchError || batError || 'unknown error';
     setStatus('error', `No data loaded — ${detail}. Tried: "${pitchTab}" and "${batTab}"`);
-    if ($('refreshBtn')) $('refreshBtn').disabled = false;
-  } else {
+    } else {
     setStatus('loading', `${team}: ${parts.join(' · ')} loaded. Generating report…`);
-    if ($('refreshBtn')) $('refreshBtn').disabled = false;
-    await generateReport();
+      await generateReport();
   }
 }
 
@@ -628,12 +575,10 @@ function renderBattingPanel(batTab) {
   const summaryWrap   = $('battingSummaryWrap');
   const commonWrap    = $('commonSummaryWrap');
   const noCommon      = $('noCommonNotice');
-  const charts        = $('chartsSection');
   if (!games.length) {
     summaryWrap.style.display = 'none';
     commonWrap.style.display  = 'none';
     noCommon.style.display    = 'none';
-    charts.style.display      = 'none';
     notice.style.display      = 'none';
     return;
   }
@@ -666,73 +611,9 @@ function renderBattingPanel(batTab) {
     noCommon.style.display   = 'block';
   }
 
-  charts.style.display = 'block';
-  renderCharts(coTot, coName);
 }
 
 // ── Charts ──
-function renderCharts(coTot, coName) {
-  const labels   = games.map(g => `G${g.game}`);
-  const avgData  = games.map(g => +g.avg.toFixed(3));
-  const obpData  = games.map(g => +g.obp.toFixed(3));
-  const sobbData = games.map(g => g.sobb !== null ? +g.sobb.toFixed(2) : null);
-
-  // Common opponent points — shown as scatter overlay
-  const mkCommonPoints = (dataFn) => games
-    .map((g, i) => g.common ? { x: i, y: dataFn(g) } : null)
-    .filter(Boolean);
-
-  const commonAvgPts  = mkCommonPoints(g => +g.avg.toFixed(3));
-  const commonObpPts  = mkCommonPoints(g => +g.obp.toFixed(3));
-  const commonSobbPts = mkCommonPoints(g => g.sobb !== null ? +g.sobb.toFixed(2) : null).filter(p => p.y !== null);
-
-  const mk = (id, label, lineData, commonPts, lineColor, commonColor) => {
-    if (chartInstances[id]) chartInstances[id].destroy();
-    const datasets = [{
-      label,
-      data: lineData,
-      borderColor: lineColor,
-      backgroundColor: lineColor.replace(')',',0.07)').replace('rgb','rgba'),
-      pointBackgroundColor: lineColor,
-      borderWidth: 2, tension: 0.3,
-      pointRadius: games.length > 15 ? 2 : 3,
-      fill: true, spanGaps: true, type: 'line',
-    }];
-
-    if (commonPts.length > 0) {
-      datasets.push({
-        label: `vs. ${coName || 'Common Opp.'}`,
-        data: commonPts.map(p => ({ x: p.x, y: p.y })),
-        backgroundColor: commonColor,
-        borderColor: commonColor,
-        pointRadius: 6,
-        pointStyle: 'rectRot',
-        type: 'scatter',
-        showLine: false,
-      });
-    }
-
-    chartInstances[id] = new Chart($(id).getContext('2d'), {
-      type: 'line',
-      data: { labels, datasets },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: commonPts.length > 0, labels: { font: { family: 'IBM Plex Mono', size: 9 }, boxWidth: 10 } },
-          tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y}` } }
-        },
-        scales: {
-          x: { ticks: { font: { family: 'IBM Plex Mono', size: 8 }, maxRotation: 0, maxTicksLimit: 8 }, grid: { display: false } },
-          y: { ticks: { font: { family: 'IBM Plex Mono', size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
-        }
-      }
-    });
-  };
-
-  mk('chartAVG',  'AVG',   avgData,  commonAvgPts,  'rgb(26,45,74)',   'rgb(21,101,192)');
-  mk('chartOBP',  'OBP',   obpData,  commonObpPts,  'rgb(45,90,53)',   'rgb(21,101,192)');
-  mk('chartSOBB', 'SO/BB', sobbData, commonSobbPts, 'rgb(90,100,114)', 'rgb(21,101,192)');
-}
 
 // ── Pitching stats for report ──
 function ipToDecimal(ip) {
