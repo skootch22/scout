@@ -152,8 +152,8 @@
     text-transform: uppercase; font-weight: 600; padding: 6px 10px;
     display: flex; align-items: center; gap: 6px;
   }
-  .summary-section-label.season-lbl { background: var(--blue); color: rgba(255,255,255,.7); }
-  .summary-section-label.common-lbl { background: var(--common); color: rgba(255,255,255,.75); }
+  .summary-section-label.season-lbl { background: var(--blue); color: rgba(255,255,255,.95); font-weight: 700; }
+  .summary-section-label.common-lbl { background: var(--common); color: rgba(255,255,255,.95); font-weight: 700; }
 
   .batting-summary {
     display: grid; grid-template-columns: repeat(3,1fr);
@@ -164,10 +164,10 @@
   .bsum-item { padding: 12px 6px; text-align: center; border-right: 1px solid var(--line); background: var(--chalk); }
   .bsum-item:last-child { border-right: none; }
   .common-summary .bsum-item { background: var(--common-light); border-right-color: rgba(74,26,110,.1); }
-  .bsum-label { font-family: 'IBM Plex Mono', monospace; font-size: .48rem; letter-spacing: .12em; text-transform: uppercase; opacity: .5; margin-bottom: 2px; }
+  .bsum-label { font-family: 'IBM Plex Mono', monospace; font-size: .52rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
   .bsum-value { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 900; line-height: 1; color: var(--blue); }
   .common-summary .bsum-value { color: var(--common); }
-  .bsum-sub { font-family: 'IBM Plex Mono', monospace; font-size: .52rem; opacity: .45; margin-top: 2px; }
+  .bsum-sub { font-family: 'IBM Plex Mono', monospace; font-size: .52rem; font-weight: 600; color: var(--ink); opacity: .6; margin-top: 2px; }
 
   /* ── CHARTS ── */
   .charts-section { margin-top: 16px; }
@@ -201,11 +201,11 @@
   .report-strip.batting-strip  { border-top: 3px solid var(--blue); background: var(--blue); }
   .report-strip.common-strip   { border-top: 3px solid var(--common); background: var(--common); }
 
-  .strip-eyebrow { grid-column: 1/-1; font-family: 'IBM Plex Mono', monospace; font-size: .52rem; letter-spacing: .18em; text-transform: uppercase; padding: 7px 12px 3px; color: rgba(255,255,255,.6); border-bottom: 1px solid rgba(255,255,255,.12); }
+  .strip-eyebrow { grid-column: 1/-1; font-family: 'IBM Plex Mono', monospace; font-size: .52rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; padding: 7px 12px 3px; color: rgba(255,255,255,.95); border-bottom: 1px solid rgba(255,255,255,.2); }
   .rstat { padding: 11px 6px; text-align: center; border-right: 1px solid rgba(255,255,255,.15); color: var(--cream); }
   .rstat:last-child { border-right: none; }
   .rstat-val { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 900; line-height: 1; display: block; }
-  .rstat-lbl { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; opacity: .65; margin-top: 2px; display: block; }
+  .rstat-lbl { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: rgba(255,255,255,.95); margin-top: 2px; display: block; }
   .rstat-sub { font-family: 'IBM Plex Mono', monospace; font-size: .5rem; opacity: .5; display: block; margin-top: 1px; }
 
   .report-section { padding: 16px; border-top: 1px solid var(--line); }
@@ -221,7 +221,7 @@
   .pr-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.6rem; line-height: 1; min-width: 44px; text-align: center; }
   .pr-stats { flex: 1; display: grid; grid-template-columns: repeat(3,1fr); gap: 6px 8px; }
   .prs .v { font-family: 'IBM Plex Mono', monospace; font-size: .82rem; font-weight: 600; display: block; }
-  .prs .l { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; opacity: .4; display: block; }
+  .prs .l { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--ink); display: block; }
   .prs.hi .v { color: var(--dirt); }
   .pr-grade { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; border: 1.5px solid rgba(0,0,0,.2); }
   .grade-A { background: #2d5a35; color: white; }
