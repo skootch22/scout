@@ -223,7 +223,7 @@
   .prs .v { font-family: 'IBM Plex Mono', monospace; font-size: .82rem; font-weight: 600; display: block; }
   .prs .l { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; opacity: .4; display: block; }
   .prs.hi .v { color: var(--dirt); }
-  .pr-grade { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900; font-size: .75rem; border: 1.5px solid var(--dark); flex-shrink: 0; }
+  .pr-grade { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; border: 1.5px solid rgba(0,0,0,.2); }
   .grade-A { background: #2d5a35; color: white; }
   .grade-B { background: #4a7c59; color: white; }
   .grade-C { background: var(--dirt); color: white; }
@@ -320,14 +320,10 @@
 
 <div class="container">
 
-  <!-- Sheet Config -->
+  <!-- Team Selector -->
   <div class="card">
-    <span class="section-label">Google Sheet Data Source</span>
-    <div class="field" style="margin-bottom:14px">
-      <label>Google Sheet URL</label>
-      <input type="url" id="sheetUrl" placeholder="Paste your Google Sheet URL…" autocomplete="off" autocorrect="off" spellcheck="false">
-    </div>
-    <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:4px">
+    <span class="section-label">Select Team</span>
+    <div style="display:flex;gap:10px;align-items:flex-end">
       <div class="field" style="flex:1">
         <label>Team</label>
         <select id="teamSelect" style="
@@ -335,10 +331,10 @@
           font-family:'IBM Plex Sans',sans-serif;font-size:16px;font-weight:500;
           background:transparent;color:var(--dark);outline:none;width:100%;
           -webkit-appearance:none;appearance:none;cursor:pointer;
-          background-image:url('data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'><path d=\'M1 1l5 5 5-5\' stroke=\' %231a1208\' stroke-width=\'2\' fill=\'none\'/></svg>');
+          background-image:url('data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%231a1208' stroke-width='2' fill='none'/></svg>');
           background-repeat:no-repeat;background-position:right 4px center;padding-right:24px;
         ">
-          <option value="">— connect to sheet first —</option>
+          <option value="">— loading teams… —</option>
         </select>
       </div>
       <button onclick="onLoadClick()" id="connectBtn" style="
@@ -347,13 +343,6 @@
         padding:10px 16px;cursor:pointer;white-space:nowrap;min-height:44px;flex-shrink:0;
         box-shadow:3px 3px 0 var(--dark);transition:all .15s;
       ">Load</button>
-    </div>
-    <div class="sheet-hint">
-      <strong>Teams tab:</strong> Add a tab named <strong>Teams</strong> with a single column "Team" listing each team name.<br>
-      <strong>Pitching tab:</strong> "TeamName - Pitching" &nbsp;·&nbsp; <strong>Batting tab:</strong> "TeamName - Batting"<br>
-      <strong>Pitching columns:</strong> Number | IP | Pitches | Strikes | BB | K<br>
-      <strong>Batting columns:</strong> Game | AB | R | H | RBI | BB | SO | Opponent | Common<br>
-      <strong>Setup:</strong> File → Share → Publish to web → publish document → paste URL, then press Enter
     </div>
   </div>
 
@@ -444,7 +433,7 @@
 let pitchers    = [];
 let games       = [];
 let currentTeam = '';
-let sheetId     = '';
+let sheetId     = '11RIKkgh2hpozY3boJ6iqK_XA9-iurofS7Z5ZyECCa8A'; // hardcoded
 let chartInstances = {};
 
 const $ = id => document.getElementById(id);
@@ -467,26 +456,21 @@ function fmt(n, d = 3) { return n.toFixed(d).replace(/^0\./, '.'); }
 
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
-// ── Step 1: fetch Teams tab and populate dropdown ──
+// ── Fetch Teams tab and populate dropdown (runs on page load) ──
 async function fetchTeamList() {
-  const url = $('sheetUrl').value.trim();
-  if (!url) { setStatus('error', 'Please paste your Google Sheet URL.'); return; }
-  sheetId = extractSheetId(url);
-  if (!sheetId) { setStatus('error', 'Could not find a sheet ID in that URL. Use the regular editing URL.'); return; }
-  setStatus('loading', 'Fetching team list…');
   try {
     const text = await fetchCsv('Teams');
-    const lines = text.trim().split('\n').slice(1); // skip header
+    const lines = text.trim().split('\n').slice(1);
     const teams = lines
       .map(l => parseCsvLine(l)[0].trim())
       .filter(Boolean);
-    if (!teams.length) throw new Error('No teams found in the Teams tab.');
+    if (!teams.length) throw new Error('No teams found.');
     const sel = $('teamSelect');
     sel.innerHTML = '<option value="">— select a team —</option>' +
       teams.map(t => `<option value="${t}">${t}</option>`).join('');
-    setStatus('success', `${teams.length} team${teams.length !== 1 ? 's' : ''} found. Select one and tap Load.`);
+    setStatus('success', `${teams.length} team${teams.length !== 1 ? 's' : ''} ready. Select one and tap Load.`);
   } catch(e) {
-    setStatus('error', `Could not load Teams tab: ${e.message}`);
+    setStatus('error', `Could not load team list: ${e.message}`);
   }
 }
 
@@ -969,7 +953,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
         <div class="prs hi"><span class="v">${p.bbk!==null?p.bbk.toFixed(2):'—'}</span><span class="l">BB/K</span></div>
         <div class="prs"><span class="v">${p.kper9.toFixed(1)}</span><span class="l">K/9</span></div>
       </div>
-      <div class="pr-grade grade-${p.grade}">${p.grade}</div>
+      <div class="pr-grade grade-${p.grade}"></div>
     </div>
   `).join('') || '<p style="opacity:.4;font-style:italic;font-size:.82rem;padding:8px 0">No pitching data loaded.</p>';
 
@@ -984,15 +968,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
           <div class="bkpi"><span class="bv">${fmt(tot.obp)}</span><span class="bl">OBP</span></div>
           <div class="bkpi"><span class="bv">${tot.sobb!==null?tot.sobb.toFixed(2):'—'}</span><span class="bl">SO/BB</span></div>
         </div>
-        <hr class="bat-divider">
-        <div class="bat-totals-label">Raw totals</div>
-        <div class="bat-raw">
-          <div class="brt"><span class="rv">${tot.ab}</span><span class="rl">AB</span></div>
-          <div class="brt"><span class="rv">${tot.h}</span><span class="rl">H</span></div>
-          <div class="brt"><span class="rv">${tot.r}</span><span class="rl">R</span></div>
-          <div class="brt"><span class="rv">${tot.rbi}</span><span class="rl">RBI</span></div>
-          <div class="brt"><span class="rv">${tot.bb}</span><span class="rl">BB</span></div>
-        </div>
+
       </div>`;
   }
 
@@ -1021,15 +997,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
             <span class="bl">SO/BB</span>
           </div>
         </div>
-        <hr class="bat-divider">
-        <div class="bat-totals-label">Raw totals</div>
-        <div class="bat-raw">
-          <div class="brt"><span class="rv">${coTot.ab}</span><span class="rl">AB</span></div>
-          <div class="brt"><span class="rv">${coTot.h}</span><span class="rl">H</span></div>
-          <div class="brt"><span class="rv">${coTot.r}</span><span class="rl">R</span></div>
-          <div class="brt"><span class="rv">${coTot.rbi}</span><span class="rl">RBI</span></div>
-          <div class="brt"><span class="rv">${coTot.bb}</span><span class="rl">BB</span></div>
-        </div>
+
       </div>`;
   }
 
@@ -1148,10 +1116,8 @@ function getWeaknesses(pStats, pAgg, tot, coTot, coName) {
 }
 
 // Enter key on either input triggers load
-$('sheetUrl').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); fetchTeamList(); }
-});
-$('sheetUrl').addEventListener('change', () => fetchTeamList());
+// Teams load automatically on page load via fetchTeamList() below
+fetchTeamList();
 </script>
 </body>
 </html>
