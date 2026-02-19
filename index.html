@@ -768,16 +768,9 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="rstat"><span class="rstat-val">${coSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
     </div>` : ''}
 
-    <div class="report-columns">
-      <div class="report-section report-col-left">
-        <div class="report-section-heading pitching">⚾ Pitching Staff</div>
-        ${pitcherRows}
-      </div>
-      <div class="report-section">
-        <div class="report-section-heading batting">📊 Offensive Profile</div>
-        ${batCard}
-        ${coCard}
-      </div>
+    <div class="report-section">
+      <div class="report-section-heading pitching">⚾ Pitching Staff</div>
+      ${pitcherRows}
     </div>
 
     <div class="report-section">
