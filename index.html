@@ -385,22 +385,6 @@
       ⓘ No games marked as Common Opponent yet. Set Common = 1 in your batting tab to enable this section.
     </div>
 
-    <!-- Game log table -->
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>Gm</th><th>AB</th><th>R</th><th>H</th><th>RBI</th><th>BB</th><th>SO</th>
-            <th class="calc-b">AVG</th><th class="calc-b">OBP</th><th class="calc-b">SO/BB</th>
-            <th class="opp-col">Opponent</th><th class="opp-col">CO</th>
-          </tr>
-        </thead>
-        <tbody id="battingBody">
-          <tr><td colspan="12"><div class="empty-state">Select a team above</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-
     <!-- Trend charts -->
     <div class="charts-section" id="chartsSection" style="display:none">
       <div class="charts-label">Per-Game Trends</div>
@@ -669,20 +653,12 @@ function renderBattingPanel(batTab) {
   const commonWrap    = $('commonSummaryWrap');
   const noCommon      = $('noCommonNotice');
   const charts        = $('chartsSection');
-  const tbody         = $('battingBody');
-
   if (!games.length) {
-    tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state">No batting data</div></td></tr>';
     summaryWrap.style.display = 'none';
     commonWrap.style.display  = 'none';
     noCommon.style.display    = 'none';
     charts.style.display      = 'none';
-    if (!batTab) {
-      $('expectedBattingTab').textContent = `${currentTeam} - Batting`;
-      notice.style.display = 'block';
-    } else {
-      notice.style.display = 'none';
-    }
+    notice.style.display      = 'none';
     return;
   }
 
@@ -695,9 +671,9 @@ function renderBattingPanel(batTab) {
 
   // Season summary
   summaryWrap.style.display = 'block';
-  $('sumAVG').textContent  = fmt(tot.avg);
-  $('sumOBP').textContent  = fmt(tot.obp);
-  $('sumSOBB').textContent = tot.sobb !== null ? tot.sobb.toFixed(2) : '—';
+  $('sumAVG').textContent   = fmt(tot.avg);
+  $('sumOBP').textContent   = fmt(tot.obp);
+  $('sumSOBB').textContent  = tot.sobb !== null ? tot.sobb.toFixed(2) : '—';
   $('sumGames').textContent = `${games.length} game${games.length!==1?'s':''}`;
 
   // Common opponent summary
@@ -713,37 +689,6 @@ function renderBattingPanel(batTab) {
     commonWrap.style.display = 'none';
     noCommon.style.display   = 'block';
   }
-
-  // Game log table
-  tbody.innerHTML = games.map(g => `
-    <tr class="${g.common ? 'common-row' : ''}">
-      <td>G${g.game}</td><td>${g.ab}</td><td>${g.run}</td><td>${g.h}</td>
-      <td>${g.rbi}</td><td>${g.bb}</td><td>${g.so}</td>
-      <td class="calc-b">${fmt(g.avg)}</td>
-      <td class="calc-b">${fmt(g.obp)}</td>
-      <td class="calc-b">${g.sobb !== null ? g.sobb.toFixed(2) : '—'}</td>
-      <td class="opp-name">${g.opponent || '—'}</td>
-      <td class="common-flag">${g.common ? '🎯' : ''}</td>
-    </tr>
-  `).join('') + `
-    <tr class="totals-row">
-      <td>SEASON</td><td>${tot.ab}</td><td>${tot.r}</td><td>${tot.h}</td>
-      <td>${tot.rbi}</td><td>${tot.bb}</td><td>${tot.so}</td>
-      <td class="calc-b">${fmt(tot.avg)}</td>
-      <td class="calc-b">${fmt(tot.obp)}</td>
-      <td class="calc-b">${tot.sobb !== null ? tot.sobb.toFixed(2) : '—'}</td>
-      <td class="opp-name">—</td><td></td>
-    </tr>
-    ${coTot && coTot.count > 0 ? `
-    <tr class="common-totals-row">
-      <td>VS. CO</td><td>${coTot.ab}</td><td>${coTot.r}</td><td>${coTot.h}</td>
-      <td>${coTot.rbi}</td><td>${coTot.bb}</td><td>${coTot.so}</td>
-      <td class="calc-b">${fmt(coTot.avg)}</td>
-      <td class="calc-b">${fmt(coTot.obp)}</td>
-      <td class="calc-b">${coTot.sobb !== null ? coTot.sobb.toFixed(2) : '—'}</td>
-      <td class="opp-name">${coName}</td><td>🎯</td>
-    </tr>` : ''}
-  `;
 
   charts.style.display = 'block';
   renderCharts(coTot, coName);
