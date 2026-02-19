@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Scout — Baseball Scouting Reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --dark: #1a1208;
+    --green: #1a3d1f;
+    --green-light: #2d5a35;
+    --dirt: #c4833a;
+    --chalk: #f0ede4;
+    --red: #8b1a1a;
+    --blue: #1a2d4a;
+    --ink: #2c1f0e;
+    --line: rgba(26,18,8,0.12);
+    --common: #4a1a6e; /* purple accent for common opponent */
+    --common-light: #f3eefa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--cream);
+    color: var(--dark);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    font-size: 16px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--green);
+    color: var(--cream);
+    padding: 14px 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-bottom: 4px solid var(--dirt);
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  header h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; line-height: 1; }
+  header span { font-family: 'IBM Plex Mono', monospace; font-size: .62rem; opacity: .6; letter-spacing: .1em; text-transform: uppercase; }
+
+  .container { padding: 16px; max-width: 1060px; margin: 0 auto; }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .6rem; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--dirt); font-weight: 600; margin-bottom: 10px; display: block;
+  }
+
+  /* ── CARDS ── */
+  .card { background: white; border: 2px solid var(--dark); box-shadow: 4px 4px 0 var(--dark); padding: 16px; margin-bottom: 16px; }
+
+  /* ── FIELDS ── */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-family: 'IBM Plex Mono', monospace; font-size: .6rem; letter-spacing: .15em; text-transform: uppercase; opacity: .55; }
+  .field input {
+    border: none; border-bottom: 2px solid var(--dark); padding: 10px 4px;
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 16px; font-weight: 500;
+    background: transparent; color: var(--dark); outline: none; width: 100%;
+    transition: border-color .2s; -webkit-appearance: none;
+  }
+  .field input:focus { border-color: var(--dirt); }
+
+  /* ── TEAM TABS ── */
+  #teamTabsWrap { display: none; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+  .team-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .team-tab {
+    font-family: 'IBM Plex Mono', monospace; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
+    padding: 10px 16px; border: 2px solid var(--dark); background: transparent; cursor: pointer;
+    font-weight: 600; transition: all .15s; color: var(--dark); min-height: 44px;
+  }
+  .team-tab.active { background: var(--dark); color: var(--cream); }
+
+  .sheet-hint {
+    margin-top: 14px; font-family: 'IBM Plex Mono', monospace; font-size: .6rem;
+    opacity: .42; line-height: 1.8; border-top: 1px solid var(--line); padding-top: 12px;
+  }
+  .sheet-hint strong { opacity: 1; color: var(--dirt); }
+
+  /* ── STATUS BAR ── */
+  #statusBar {
+    display: none; padding: 12px 16px; font-family: 'IBM Plex Mono', monospace;
+    font-size: .68rem; letter-spacing: .06em; border: 2px solid; margin-bottom: 16px;
+    align-items: flex-start; gap: 10px; line-height: 1.5;
+  }
+  #statusBar.loading { background: #fffbe6; border-color: var(--dirt); color: var(--dirt); display: flex; }
+  #statusBar.success { background: #eaf3eb; border-color: var(--green); color: var(--green); display: flex; }
+  #statusBar.error   { background: #fdf0f0; border-color: var(--red);   color: var(--red);   display: flex; }
+
+  /* ── META ── */
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ── PANEL HEADER ── */
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 8px; }
+  .panel-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .panel-badge { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; padding: 3px 8px; border: 1.5px solid; font-weight: 600; }
+  .panel-badge.pitching { border-color: var(--green); color: var(--green); }
+  .panel-badge.batting  { border-color: var(--blue);  color: var(--blue);  }
+
+  .refresh-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: .65rem; letter-spacing: .08em; text-transform: uppercase;
+    background: none; border: 2px solid var(--green); color: var(--green); padding: 8px 14px;
+    cursor: pointer; font-weight: 600; min-height: 44px; white-space: nowrap;
+  }
+  .refresh-btn:disabled { opacity: .4; }
+
+  /* ── TABLES ── */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px; padding: 0 16px; }
+  table { width: 100%; border-collapse: collapse; min-width: 480px; }
+  thead tr { background: var(--dark); color: var(--cream); }
+  thead th {
+    font-family: 'IBM Plex Mono', monospace; font-size: .58rem; letter-spacing: .1em;
+    text-transform: uppercase; padding: 9px 10px; text-align: center; font-weight: 600; white-space: nowrap;
+  }
+  thead th:first-child { text-align: left; position: sticky; left: 0; background: var(--dark); z-index: 1; }
+  thead th.calc-p { background: #1a2d0a; color: #7fba00; }
+  thead th.calc-b { background: #0a1a2d; color: #5b9bd5; }
+  thead th.opp-col { background: #2a1040; color: #c89aee; }
+
+  tbody tr { border-bottom: 1px solid var(--line); }
+  tbody tr.common-row { background: var(--common-light); }
+  tbody tr.totals-row { background: var(--chalk); font-weight: 600; border-top: 2px solid var(--dark); }
+  tbody tr.common-totals-row { background: #e8d8f8; font-weight: 600; border-top: 2px solid var(--common); }
+
+  tbody td { padding: 9px 10px; font-size: .84rem; text-align: center; font-family: 'IBM Plex Mono', monospace; }
+  tbody td:first-child { text-align: left; font-weight: 600; position: sticky; left: 0; background: white; z-index: 1; }
+  tbody tr.common-row td:first-child { background: var(--common-light); }
+  tbody tr.totals-row td:first-child { background: var(--chalk); }
+  tbody tr.common-totals-row td:first-child { background: #e8d8f8; }
+  tbody td.calc-p { background: rgba(127,186,0,.07); font-weight: 600; }
+  tbody td.calc-b { background: rgba(91,155,213,.09); font-weight: 600; }
+  tbody td.opp-name { font-family: 'IBM Plex Sans', sans-serif; font-size: .8rem; text-align: left; }
+  tbody td.common-flag { font-size: .75rem; }
+
+  .empty-state { text-align: center; padding: 32px 16px; color: var(--ink); opacity: .32; font-family: 'IBM Plex Mono', monospace; font-size: .7rem; letter-spacing: .1em; }
+
+  /* ── BATTING SUMMARY STRIP ── */
+  .summary-wrap { margin-bottom: 16px; }
+
+  .summary-section-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: .56rem; letter-spacing: .18em;
+    text-transform: uppercase; font-weight: 600; padding: 6px 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .summary-section-label.season-lbl { background: var(--blue); color: rgba(255,255,255,.7); }
+  .summary-section-label.common-lbl { background: var(--common); color: rgba(255,255,255,.75); }
+
+  .batting-summary {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    border: 2px solid var(--dark); overflow: hidden;
+  }
+  .batting-summary.common-summary { border-color: var(--common); }
+
+  .bsum-item { padding: 12px 6px; text-align: center; border-right: 1px solid var(--line); background: var(--chalk); }
+  .bsum-item:last-child { border-right: none; }
+  .common-summary .bsum-item { background: var(--common-light); border-right-color: rgba(74,26,110,.1); }
+  .bsum-label { font-family: 'IBM Plex Mono', monospace; font-size: .48rem; letter-spacing: .12em; text-transform: uppercase; opacity: .5; margin-bottom: 2px; }
+  .bsum-value { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 900; line-height: 1; color: var(--blue); }
+  .common-summary .bsum-value { color: var(--common); }
+  .bsum-sub { font-family: 'IBM Plex Mono', monospace; font-size: .52rem; opacity: .45; margin-top: 2px; }
+
+  /* ── CHARTS ── */
+  .charts-section { margin-top: 16px; }
+  .charts-label { font-family: 'IBM Plex Mono', monospace; font-size: .6rem; letter-spacing: .15em; text-transform: uppercase; color: var(--blue); opacity: .7; margin-bottom: 10px; font-weight: 600; }
+  .charts-grid { display: flex; flex-direction: column; gap: 14px; }
+  .chart-wrap { border: 1.5px solid var(--line); padding: 12px; background: var(--chalk); }
+  .chart-title { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; opacity: .5; margin-bottom: 8px; }
+
+  /* ── GENERATE ── */
+  .generate-wrap { display: none; text-align: center; margin-bottom: 20px; }
+  .generate-btn {
+    font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; letter-spacing: .04em;
+    background: var(--green); color: var(--cream); border: 3px solid var(--green);
+    padding: 16px 32px; width: 100%; cursor: pointer;
+    box-shadow: 4px 4px 0 var(--dark); transition: all .15s; min-height: 56px;
+  }
+  .generate-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--dark); }
+  .generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ── REPORT ── */
+  #report { display: none; background: white; border: 2px solid var(--dark); box-shadow: 4px 4px 0 var(--dark); overflow: hidden; animation: slideIn .35s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  .report-masthead { background: var(--dark); color: var(--cream); padding: 20px 16px; }
+  .masthead-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .2em; opacity: .4; text-transform: uppercase; margin-bottom: 4px; }
+  .masthead-team { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; letter-spacing: .02em; line-height: 1; margin-bottom: 8px; }
+  .masthead-meta { font-family: 'IBM Plex Mono', monospace; font-size: .62rem; opacity: .45; letter-spacing: .08em; line-height: 1.7; }
+
+  .report-strip { display: grid; grid-template-columns: repeat(3,1fr); }
+  .report-strip.pitching-strip { border-top: 3px solid var(--dirt); background: var(--dirt); }
+  .report-strip.batting-strip  { border-top: 3px solid var(--blue); background: var(--blue); }
+  .report-strip.common-strip   { border-top: 3px solid var(--common); background: var(--common); }
+
+  .strip-eyebrow { grid-column: 1/-1; font-family: 'IBM Plex Mono', monospace; font-size: .52rem; letter-spacing: .18em; text-transform: uppercase; padding: 7px 12px 3px; color: rgba(255,255,255,.6); border-bottom: 1px solid rgba(255,255,255,.12); }
+  .rstat { padding: 11px 6px; text-align: center; border-right: 1px solid rgba(255,255,255,.15); color: var(--cream); }
+  .rstat:last-child { border-right: none; }
+  .rstat-val { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 900; line-height: 1; display: block; }
+  .rstat-lbl { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; opacity: .65; margin-top: 2px; display: block; }
+  .rstat-sub { font-family: 'IBM Plex Mono', monospace; font-size: .5rem; opacity: .5; display: block; margin-top: 1px; }
+
+  .report-section { padding: 16px; border-top: 1px solid var(--line); }
+  .report-section-heading { font-family: 'IBM Plex Mono', monospace; font-size: .58rem; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 2px solid; }
+  .report-section-heading.pitching { border-color: var(--dirt); color: var(--dirt); }
+  .report-section-heading.batting  { border-color: var(--blue);  color: var(--blue);  }
+  .report-section-heading.common   { border-color: var(--common); color: var(--common); }
+  .report-section-heading.findings { border-color: var(--dark); color: var(--dark); }
+  .report-section-heading.narrative{ border-color: var(--green); color: var(--green); }
+
+  /* Pitcher row */
+  .pitcher-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--chalk); border: 1.5px solid var(--dark); margin-bottom: 8px; }
+  .pr-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.6rem; line-height: 1; min-width: 44px; text-align: center; }
+  .pr-stats { flex: 1; display: grid; grid-template-columns: repeat(3,1fr); gap: 6px 8px; }
+  .prs .v { font-family: 'IBM Plex Mono', monospace; font-size: .82rem; font-weight: 600; display: block; }
+  .prs .l { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; opacity: .4; display: block; }
+  .prs.hi .v { color: var(--dirt); }
+  .pr-grade { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900; font-size: .75rem; border: 1.5px solid var(--dark); flex-shrink: 0; }
+  .grade-A { background: #2d5a35; color: white; }
+  .grade-B { background: #4a7c59; color: white; }
+  .grade-C { background: var(--dirt); color: white; }
+  .grade-D { background: #a0522d; color: white; }
+  .grade-F { background: var(--red); color: white; }
+
+  /* Batting report cards */
+  .bat-report-card { border: 1.5px solid var(--blue); background: #f0f4fa; padding: 14px; margin-bottom: 12px; }
+  .bat-report-card.common-card { border-color: var(--common); background: var(--common-light); }
+
+  .bat-card-label { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .15em; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; color: var(--blue); }
+  .bat-report-card.common-card .bat-card-label { color: var(--common); }
+
+  .bat-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 12px; }
+  .bkpi { text-align: center; }
+  .bkpi .bv { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 900; color: var(--blue); display: block; line-height: 1; }
+  .common-card .bkpi .bv { color: var(--common); }
+  .bkpi .bl { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; opacity: .5; display: block; margin-top: 2px; }
+  .bat-divider { border: none; border-top: 1px solid var(--line); margin: 10px 0; }
+  .bat-totals-label { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .1em; text-transform: uppercase; opacity: .4; margin-bottom: 6px; }
+  .bat-raw { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
+  .brt .rv { font-family: 'IBM Plex Mono', monospace; font-size: .85rem; font-weight: 600; display: block; }
+  .brt .rl { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; opacity: .38; display: block; }
+
+  /* Common opponent name display */
+  .common-opp-name {
+    font-family: 'Playfair Display', serif; font-weight: 700; font-size: .95rem;
+    color: var(--common); margin-bottom: 8px;
+  }
+  .common-games-count { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; opacity: .5; text-transform: uppercase; letter-spacing: .1em; }
+
+  /* Findings */
+  .findings-grid { display: flex; flex-direction: column; gap: 10px; }
+  .finding { padding: 12px; border-left: 4px solid var(--dirt); background: var(--chalk); }
+  .finding.strength { border-left-color: var(--green); }
+  .finding.weakness { border-left-color: var(--red); }
+  .finding-type { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; opacity: .55; margin-bottom: 3px; }
+  .finding p { font-size: .84rem; line-height: 1.5; }
+
+  /* Narrative */
+  .narrative-text { font-size: .92rem; line-height: 1.8; color: var(--ink); white-space: pre-wrap; }
+  .ai-badge { font-family: 'IBM Plex Mono', monospace; font-size: .5rem; letter-spacing: .12em; text-transform: uppercase; background: var(--green); color: var(--cream); padding: 2px 7px; border-radius: 2px; vertical-align: middle; margin-left: 6px; }
+
+  /* Dots */
+  .loading-indicator { display: flex; align-items: center; gap: 10px; color: var(--dirt); font-family: 'IBM Plex Mono', monospace; font-size: .75rem; }
+  .dots { display: flex; gap: 4px; }
+  .dots span { width: 6px; height: 6px; background: currentColor; border-radius: 50%; animation: bounce 1.2s infinite; }
+  .dots span:nth-child(2) { animation-delay: .2s; }
+  .dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes bounce { 0%,80%,100% { transform:scale(.6); opacity:.4; } 40% { transform:scale(1); opacity:1; } }
+
+  /* No common opponent notice */
+  .no-common-notice {
+    font-family: 'IBM Plex Mono', monospace; font-size: .65rem; letter-spacing: .06em;
+    color: var(--common); opacity: .6; padding: 10px; border: 1px dashed var(--common);
+    background: var(--common-light); line-height: 1.6;
+  }
+
+  /* ═══════════════════════════════
+     DESKTOP (min-width: 700px)
+     ═══════════════════════════════ */
+  @media (min-width: 700px) {
+    header { padding: 18px 32px; }
+    header h1 { font-size: 2rem; }
+    .container { padding: 28px 24px; }
+    .card { padding: 24px; box-shadow: 5px 5px 0 var(--dark); }
+    .generate-btn { width: auto; padding: 16px 48px; }
+    .charts-grid { flex-direction: row; }
+    .chart-wrap { flex: 1; }
+    .report-masthead { padding: 28px 28px; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 16px; }
+    .masthead-meta { text-align: right; }
+    .report-dual-strip { display: grid; grid-template-columns: 1fr 1fr; }
+    .report-strip.pitching-strip { border-top: none; border-right: 2px solid rgba(255,255,255,.1); }
+    .report-strip.batting-strip  { border-top: none; }
+    .report-columns { display: grid; grid-template-columns: 1fr 1fr; }
+    .report-col-left { border-right: 1px solid var(--line); }
+    .findings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .rstat-val { font-size: 1.5rem; }
+  }
+
+  @media (min-width: 900px) {
+    .container { padding: 36px 32px; }
+    .card { padding: 28px; }
+    .masthead-team { font-size: 2.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Scout</h1>
+  <span>Scouting Reports</span>
+</header>
+
+<div class="container">
+
+  <!-- Sheet Config -->
+  <div class="card">
+    <span class="section-label">Google Sheet Data Source</span>
+    <div style="display:flex;gap:10px;align-items:flex-end">
+      <div class="field" style="flex:1">
+        <label>Google Sheet URL</label>
+        <input type="url" id="sheetUrl" placeholder="Paste your Google Sheet URL…" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <button onclick="onUrlChange()" id="connectBtn" style="
+        font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+        font-weight:600;background:var(--green);color:var(--cream);border:2px solid var(--green);
+        padding:10px 16px;cursor:pointer;white-space:nowrap;min-height:44px;flex-shrink:0;
+        box-shadow:3px 3px 0 var(--dark);transition:all .15s;
+      ">Connect</button>
+    </div>
+    <div id="teamTabsWrap">
+      <span class="section-label" style="margin-top:14px;display:block">Select Team</span>
+      <div class="team-tabs" id="teamTabs"></div>
+    </div>
+    <div class="sheet-hint">
+      <strong>Tab naming:</strong> "TeamName - Pitching" &amp; "TeamName - Batting"<br>
+      <strong>Pitching columns:</strong> Number | IP | Pitches | Strikes | BB | K<br>
+      <strong>Batting columns:</strong> Game | AB | R | H | RBI | BB | SO | Opponent | Common<br>
+      &nbsp;&nbsp;<strong>Common</strong> = 1 for a common/recurring opponent, 0 otherwise<br>
+      <strong>Setup:</strong> File → Share → Publish to web → publish document → paste URL
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="statusBar"></div>
+
+  <!-- Season Info -->
+  <div class="card" id="metaSection" style="display:none">
+    <span class="section-label" id="metaLabel">Season Information</span>
+    <div class="meta-grid">
+      <div class="field">
+        <label>Season / Year</label>
+        <input type="text" id="season" placeholder="2025" value="2025">
+      </div>
+      <div class="field">
+        <label>League / Division</label>
+        <input type="text" id="league" placeholder="e.g. AAA Pacific Coast">
+      </div>
+    </div>
+  </div>
+
+  <!-- Pitching Panel -->
+  <div class="card" id="pitchingPanel" style="display:none">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="section-label" id="pitchingLabel" style="margin-bottom:0">Pitching Staff</span>
+        <span class="panel-badge pitching">Pitching</span>
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="reloadCurrentTeam()">↻ Refresh</button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>IP</th><th>Pit</th><th>Str</th><th>BB</th><th>K</th>
+            <th class="calc-p">Str%</th><th class="calc-p">BB/K</th>
+          </tr>
+        </thead>
+        <tbody id="pitchingBody">
+          <tr><td colspan="8"><div class="empty-state">Select a team above</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Batting Panel -->
+  <div class="card" id="battingPanel" style="display:none">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="section-label" id="battingLabel" style="margin-bottom:0">Batting — Game Log</span>
+        <span class="panel-badge batting">Batting</span>
+      </div>
+    </div>
+
+    <!-- Season Summary -->
+    <div class="summary-wrap" id="battingSummaryWrap" style="display:none">
+      <div class="summary-section-label season-lbl">📊 Season</div>
+      <div class="batting-summary" id="battingSummary">
+        <div class="bsum-item"><div class="bsum-label">Team AVG</div><div class="bsum-value" id="sumAVG">—</div><div class="bsum-sub" id="sumGames"></div></div>
+        <div class="bsum-item"><div class="bsum-label">Team OBP</div><div class="bsum-value" id="sumOBP">—</div></div>
+        <div class="bsum-item"><div class="bsum-label">SO / BB</div><div class="bsum-value" id="sumSOBB">—</div></div>
+      </div>
+    </div>
+
+    <!-- Common Opponent Summary -->
+    <div class="summary-wrap" id="commonSummaryWrap" style="display:none">
+      <div class="summary-section-label common-lbl">🎯 Common Opponent — <span id="commonOppNameHeader"></span></div>
+      <div class="batting-summary common-summary" id="commonSummary">
+        <div class="bsum-item"><div class="bsum-label">AVG vs.</div><div class="bsum-value" id="coAVG">—</div><div class="bsum-sub" id="coGames"></div></div>
+        <div class="bsum-item"><div class="bsum-label">OBP vs.</div><div class="bsum-value" id="coOBP">—</div></div>
+        <div class="bsum-item"><div class="bsum-label">SO/BB vs.</div><div class="bsum-value" id="coSOBB">—</div></div>
+      </div>
+    </div>
+
+    <div id="noCommonNotice" class="no-common-notice" style="display:none;margin-bottom:14px;">
+      ⓘ No games marked as Common Opponent yet. Set Common = 1 in your batting tab to enable this section.
+    </div>
+
+    <!-- Game log table -->
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Gm</th><th>AB</th><th>R</th><th>H</th><th>RBI</th><th>BB</th><th>SO</th>
+            <th class="calc-b">AVG</th><th class="calc-b">OBP</th><th class="calc-b">SO/BB</th>
+            <th class="opp-col">Opponent</th><th class="opp-col">CO</th>
+          </tr>
+        </thead>
+        <tbody id="battingBody">
+          <tr><td colspan="12"><div class="empty-state">Select a team above</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Trend charts -->
+    <div class="charts-section" id="chartsSection" style="display:none">
+      <div class="charts-label">Per-Game Trends</div>
+      <div class="charts-grid">
+        <div class="chart-wrap"><div class="chart-title">Batting Average</div><canvas id="chartAVG"></canvas></div>
+        <div class="chart-wrap"><div class="chart-title">On-Base Percentage</div><canvas id="chartOBP"></canvas></div>
+        <div class="chart-wrap"><div class="chart-title">SO / BB Ratio</div><canvas id="chartSOBB"></canvas></div>
+      </div>
+    </div>
+
+    <div id="battingNotice" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--blue);opacity:.6;padding-top:10px;line-height:1.6;">
+      ⓘ No batting tab found. Add a tab named "<span id="expectedBattingTab"></span>" to your sheet.
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <div class="generate-wrap" id="generateWrap">
+    <button class="generate-btn" onclick="generateReport()" id="genBtn">Generate Scouting Report</button>
+  </div>
+
+  <!-- Report -->
+  <div id="report"></div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+let pitchers    = [];
+let games       = [];
+let currentTeam = '';
+let sheetId     = '';
+let allTabs     = [];
+let chartInstances = {};
+
+const $ = id => document.getElementById(id);
+
+function extractSheetId(url) {
+  const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+function buildCsvUrl(id, tab) {
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+}
+function setStatus(type, msg) {
+  const bar = $('statusBar');
+  bar.className = type;
+  bar.innerHTML = type === 'loading'
+    ? `<div class="dots"><span></span><span></span><span></span></div><span>${msg}</span>`
+    : (type === 'success' ? `<span>✔ ${msg}</span>` : `<span>✖ ${msg}</span>`);
+}
+function fmt(n, d = 3) { return n.toFixed(d).replace(/^0\./, '.'); }
+
+// ── CSV ──
+function parseCsvLine(line) {
+  const r = []; let cur = '', inQ = false;
+  for (const ch of line) {
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { r.push(cur.trim()); cur = ''; }
+    else cur += ch;
+  }
+  r.push(cur.trim());
+  return r;
+}
+function colIdx(headers, ...candidates) {
+  for (const c of candidates) {
+    const i = headers.findIndex(h => h === c || h.startsWith(c));
+    if (i !== -1) return i;
+  }
+  return -1;
+}
+function cell(row, col, fallback) {
+  return (col !== -1 && row[col] !== undefined) ? row[col] : (row[fallback] || '');
+}
+
+function parsePitchingCsv(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const h = parseCsvLine(lines[0]).map(s => s.toLowerCase().replace(/[^a-z]/g,''));
+  const cNum = colIdx(h,'number','num','jersey','no');
+  const cIP  = colIdx(h,'ip','innings');
+  const cPit = colIdx(h,'pitches','pitch');
+  const cStr = colIdx(h,'strikes','strike');
+  const cBB  = colIdx(h,'bb','walks','walk');
+  const cK   = colIdx(h,'k','strikeout','so');
+  return lines.slice(1).map(l => {
+    const r = parseCsvLine(l);
+    if (r.every(c => c === '')) return null;
+    const num     = cell(r,cNum,0) || '?';
+    const ip      = parseFloat(cell(r,cIP,1))  || 0;
+    const pitches = parseInt(cell(r,cPit,2))   || 0;
+    const strikes = parseInt(cell(r,cStr,3))   || 0;
+    const bb      = parseInt(cell(r,cBB,4))    || 0;
+    const k       = parseInt(cell(r,cK,5))     || 0;
+    if (ip === 0 && pitches === 0 && k === 0) return null;
+    return { num, ip, pitches, strikes, bb, k,
+      strikePct: pitches > 0 ? strikes/pitches*100 : 0,
+      bbk: k > 0 ? bb/k : null };
+  }).filter(Boolean);
+}
+
+// Batting: Game | AB | R | H | RBI | BB | SO | Opponent | Common
+function parseBattingCsv(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const h = parseCsvLine(lines[0]).map(s => s.toLowerCase().replace(/[^a-z]/g,''));
+  const cGame = colIdx(h,'game','gm','g');
+  const cAB   = colIdx(h,'ab','atbat');
+  const cR    = colIdx(h,'r','runs','run');
+  const cH    = colIdx(h,'h','hits','hit');
+  const cRBI  = colIdx(h,'rbi');
+  const cBB   = colIdx(h,'bb','walks','walk');
+  const cSO   = colIdx(h,'so','strikeout','k');
+  const cOpp  = colIdx(h,'opponent','opp','opponent');
+  const cCom  = colIdx(h,'common','co','flag');
+
+  return lines.slice(1).map((l, i) => {
+    const r = parseCsvLine(l);
+    if (r.every(c => c === '')) return null;
+    const game     = cell(r,cGame,0) || String(i+1);
+    const ab       = parseInt(cell(r,cAB,1))  || 0;
+    const run      = parseInt(cell(r,cR,2))   || 0;
+    const hits     = parseInt(cell(r,cH,3))   || 0;
+    const rbi      = parseInt(cell(r,cRBI,4)) || 0;
+    const bb       = parseInt(cell(r,cBB,5))  || 0;
+    const so       = parseInt(cell(r,cSO,6))  || 0;
+    const opponent = cOpp !== -1 ? (r[cOpp] || '').trim() : '';
+    const common   = cCom !== -1 ? (r[cCom] || '0').trim() === '1' : false;
+    if (ab === 0) return null;
+    return { game, ab, run, h: hits, rbi, bb, so, opponent, common,
+      avg:  ab > 0 ? hits/ab : 0,
+      obp:  (ab+bb) > 0 ? (hits+bb)/(ab+bb) : 0,
+      sobb: bb > 0 ? so/bb : null };
+  }).filter(Boolean);
+}
+
+// ── Aggregates ──
+function calcTotals(gs) {
+  if (!gs.length) return null;
+  const ab  = gs.reduce((s,g) => s+g.ab, 0);
+  const h   = gs.reduce((s,g) => s+g.h, 0);
+  const r   = gs.reduce((s,g) => s+g.run, 0);
+  const rbi = gs.reduce((s,g) => s+g.rbi, 0);
+  const bb  = gs.reduce((s,g) => s+g.bb, 0);
+  const so  = gs.reduce((s,g) => s+g.so, 0);
+  return { ab, h, r, rbi, bb, so, count: gs.length,
+    avg:  ab > 0 ? h/ab : 0,
+    obp:  (ab+bb) > 0 ? (h+bb)/(ab+bb) : 0,
+    sobb: bb > 0 ? so/bb : null };
+}
+
+// Derive common opponent name (most frequent opponent with common=true)
+function commonOpponentName(gs) {
+  const commonGames = gs.filter(g => g.common);
+  if (!commonGames.length) return '';
+  const counts = {};
+  commonGames.forEach(g => { if (g.opponent) counts[g.opponent] = (counts[g.opponent]||0)+1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  // If multiple opponents flagged, return comma-joined list; usually just one
+  return sorted.map(([name]) => name).join(', ');
+}
+
+// ── Tab Discovery ──
+async function onUrlChange() {
+  const url = $('sheetUrl').value.trim();
+  if (!url) return;
+  sheetId = extractSheetId(url);
+  if (!sheetId) { setStatus('error','Could not find a sheet ID in that URL.'); return; }
+  setStatus('loading','Connecting to Google Sheets…');
+  await discoverTabs();
+}
+
+async function discoverTabs() {
+  try {
+    const resp = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=html`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const html = await resp.text();
+    const matches = [...html.matchAll(/<li[^>]+data-sheet-index="(\d+)"[^>]*>\s*([^<]+)\s*<\/li>/g)];
+    allTabs = matches.length ? matches.map(m => m[2].trim()) : ['Sheet1'];
+    const teams = extractTeamNames(allTabs);
+    renderTeamButtons(teams.length ? teams : allTabs);
+    $('teamTabsWrap').style.display = 'block';
+    setStatus('success', `Found ${teams.length || allTabs.length} team(s). Tap one to load.`);
+  } catch(e) {
+    setStatus('error', `Cannot reach sheet. Make sure it's published via File → Share → Publish to web.`);
+  }
+}
+
+function extractTeamNames(tabs) {
+  const teams = new Set();
+  tabs.forEach(t => {
+    const m = t.match(/^(.+?)\s*[-–—]\s*(pitching|batting|hitting|offense|defense)/i);
+    if (m) teams.add(m[1].trim());
+  });
+  return [...teams].sort();
+}
+
+function findTab(team, typePattern) {
+  const re = new RegExp(`^${escRe(team)}\\s*[-–—]\\s*(${typePattern})`, 'i');
+  return allTabs.find(t => re.test(t)) || null;
+}
+
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+function renderTeamButtons(teams) {
+  $('teamTabs').innerHTML = teams.map(t =>
+    `<button class="team-tab" onclick="selectTeam('${t.replace(/'/g,"\\'")}')">${t}</button>`
+  ).join('');
+}
+
+// ── Load Team ──
+async function selectTeam(team) {
+  currentTeam = team;
+  document.querySelectorAll('.team-tab').forEach(b =>
+    b.classList.toggle('active', b.textContent.trim() === team)
+  );
+  setStatus('loading', `Loading ${team}…`);
+  $('refreshBtn').disabled = true;
+
+  const pitchTab = findTab(team, 'pitching');
+  const batTab   = findTab(team, 'batting|hitting|offense');
+
+  pitchers = [];
+  if (pitchTab) { try { pitchers = parsePitchingCsv(await fetchCsv(pitchTab)); } catch(e) {} }
+
+  games = [];
+  if (batTab) { try { games = parseBattingCsv(await fetchCsv(batTab)); } catch(e) {} }
+
+  renderPitchingTable();
+  renderBattingPanel(batTab);
+
+  ['metaSection','pitchingPanel','battingPanel','generateWrap'].forEach(id => {
+    $(id).style.display = 'block';
+  });
+  $('metaLabel').textContent     = `Season — ${team}`;
+  $('pitchingLabel').textContent = `Pitching — ${team}`;
+  $('battingLabel').textContent  = `Batting — ${team}`;
+
+  const parts = [];
+  if (pitchers.length) parts.push(`${pitchers.length} pitchers`);
+  if (games.length)    parts.push(`${games.length} games`);
+  setStatus('success', `${team}: ${parts.join(' · ') || 'no data'} loaded.`);
+  $('refreshBtn').disabled = false;
+}
+
+async function fetchCsv(tab) {
+  const resp = await fetch(buildCsvUrl(sheetId, tab));
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const text = await resp.text();
+  if (text.includes('Sign in') || text.trim().startsWith('<')) throw new Error('Sheet not public.');
+  return text;
+}
+
+function reloadCurrentTeam() { if (currentTeam) selectTeam(currentTeam); }
+
+// ── Render Pitching ──
+function renderPitchingTable() {
+  const tbody = $('pitchingBody');
+  if (!pitchers.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">No pitching data</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = pitchers.map(p => `
+    <tr>
+      <td>#${p.num}</td><td>${p.ip}</td><td>${p.pitches}</td><td>${p.strikes}</td>
+      <td>${p.bb}</td><td>${p.k}</td>
+      <td class="calc-p">${p.strikePct.toFixed(1)}%</td>
+      <td class="calc-p">${p.bbk !== null ? p.bbk.toFixed(2) : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Render Batting Panel ──
+function renderBattingPanel(batTab) {
+  const notice        = $('battingNotice');
+  const summaryWrap   = $('battingSummaryWrap');
+  const commonWrap    = $('commonSummaryWrap');
+  const noCommon      = $('noCommonNotice');
+  const charts        = $('chartsSection');
+  const tbody         = $('battingBody');
+
+  if (!games.length) {
+    tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state">No batting data</div></td></tr>';
+    summaryWrap.style.display = 'none';
+    commonWrap.style.display  = 'none';
+    noCommon.style.display    = 'none';
+    charts.style.display      = 'none';
+    if (!batTab) {
+      $('expectedBattingTab').textContent = `${currentTeam} - Batting`;
+      notice.style.display = 'block';
+    } else {
+      notice.style.display = 'none';
+    }
+    return;
+  }
+
+  notice.style.display = 'none';
+
+  const tot         = calcTotals(games);
+  const commonGames = games.filter(g => g.common);
+  const coTot       = calcTotals(commonGames);
+  const coName      = commonOpponentName(games);
+
+  // Season summary
+  summaryWrap.style.display = 'block';
+  $('sumAVG').textContent  = fmt(tot.avg);
+  $('sumOBP').textContent  = fmt(tot.obp);
+  $('sumSOBB').textContent = tot.sobb !== null ? tot.sobb.toFixed(2) : '—';
+  $('sumGames').textContent = `${games.length} game${games.length!==1?'s':''}`;
+
+  // Common opponent summary
+  if (coTot && coTot.count > 0) {
+    commonWrap.style.display = 'block';
+    noCommon.style.display   = 'none';
+    $('commonOppNameHeader').textContent = coName || 'Flagged games';
+    $('coAVG').textContent   = fmt(coTot.avg);
+    $('coOBP').textContent   = fmt(coTot.obp);
+    $('coSOBB').textContent  = coTot.sobb !== null ? coTot.sobb.toFixed(2) : '—';
+    $('coGames').textContent = `${coTot.count} game${coTot.count!==1?'s':''}`;
+  } else {
+    commonWrap.style.display = 'none';
+    noCommon.style.display   = 'block';
+  }
+
+  // Game log table
+  tbody.innerHTML = games.map(g => `
+    <tr class="${g.common ? 'common-row' : ''}">
+      <td>G${g.game}</td><td>${g.ab}</td><td>${g.run}</td><td>${g.h}</td>
+      <td>${g.rbi}</td><td>${g.bb}</td><td>${g.so}</td>
+      <td class="calc-b">${fmt(g.avg)}</td>
+      <td class="calc-b">${fmt(g.obp)}</td>
+      <td class="calc-b">${g.sobb !== null ? g.sobb.toFixed(2) : '—'}</td>
+      <td class="opp-name">${g.opponent || '—'}</td>
+      <td class="common-flag">${g.common ? '🎯' : ''}</td>
+    </tr>
+  `).join('') + `
+    <tr class="totals-row">
+      <td>SEASON</td><td>${tot.ab}</td><td>${tot.r}</td><td>${tot.h}</td>
+      <td>${tot.rbi}</td><td>${tot.bb}</td><td>${tot.so}</td>
+      <td class="calc-b">${fmt(tot.avg)}</td>
+      <td class="calc-b">${fmt(tot.obp)}</td>
+      <td class="calc-b">${tot.sobb !== null ? tot.sobb.toFixed(2) : '—'}</td>
+      <td class="opp-name">—</td><td></td>
+    </tr>
+    ${coTot && coTot.count > 0 ? `
+    <tr class="common-totals-row">
+      <td>VS. CO</td><td>${coTot.ab}</td><td>${coTot.r}</td><td>${coTot.h}</td>
+      <td>${coTot.rbi}</td><td>${coTot.bb}</td><td>${coTot.so}</td>
+      <td class="calc-b">${fmt(coTot.avg)}</td>
+      <td class="calc-b">${fmt(coTot.obp)}</td>
+      <td class="calc-b">${coTot.sobb !== null ? coTot.sobb.toFixed(2) : '—'}</td>
+      <td class="opp-name">${coName}</td><td>🎯</td>
+    </tr>` : ''}
+  `;
+
+  charts.style.display = 'block';
+  renderCharts(coTot, coName);
+}
+
+// ── Charts ──
+function renderCharts(coTot, coName) {
+  const labels   = games.map(g => `G${g.game}`);
+  const avgData  = games.map(g => +g.avg.toFixed(3));
+  const obpData  = games.map(g => +g.obp.toFixed(3));
+  const sobbData = games.map(g => g.sobb !== null ? +g.sobb.toFixed(2) : null);
+
+  // Common opponent points — shown as scatter overlay
+  const mkCommonPoints = (dataFn) => games
+    .map((g, i) => g.common ? { x: i, y: dataFn(g) } : null)
+    .filter(Boolean);
+
+  const commonAvgPts  = mkCommonPoints(g => +g.avg.toFixed(3));
+  const commonObpPts  = mkCommonPoints(g => +g.obp.toFixed(3));
+  const commonSobbPts = mkCommonPoints(g => g.sobb !== null ? +g.sobb.toFixed(2) : null).filter(p => p.y !== null);
+
+  const mk = (id, label, lineData, commonPts, lineColor, commonColor) => {
+    if (chartInstances[id]) chartInstances[id].destroy();
+    const datasets = [{
+      label,
+      data: lineData,
+      borderColor: lineColor,
+      backgroundColor: lineColor.replace(')',',0.07)').replace('rgb','rgba'),
+      pointBackgroundColor: lineColor,
+      borderWidth: 2, tension: 0.3,
+      pointRadius: games.length > 15 ? 2 : 3,
+      fill: true, spanGaps: true, type: 'line',
+    }];
+
+    if (commonPts.length > 0) {
+      datasets.push({
+        label: `vs. ${coName || 'Common Opp.'}`,
+        data: commonPts.map(p => ({ x: p.x, y: p.y })),
+        backgroundColor: commonColor,
+        borderColor: commonColor,
+        pointRadius: 6,
+        pointStyle: 'rectRot',
+        type: 'scatter',
+        showLine: false,
+      });
+    }
+
+    chartInstances[id] = new Chart($(id).getContext('2d'), {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: commonPts.length > 0, labels: { font: { family: 'IBM Plex Mono', size: 9 }, boxWidth: 10 } },
+          tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y}` } }
+        },
+        scales: {
+          x: { ticks: { font: { family: 'IBM Plex Mono', size: 8 }, maxRotation: 0, maxTicksLimit: 8 }, grid: { display: false } },
+          y: { ticks: { font: { family: 'IBM Plex Mono', size: 8 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+        }
+      }
+    });
+  };
+
+  mk('chartAVG',  'AVG',   avgData,  commonAvgPts,  'rgb(26,45,74)',   'rgb(74,26,110)');
+  mk('chartOBP',  'OBP',   obpData,  commonObpPts,  'rgb(45,90,53)',   'rgb(74,26,110)');
+  mk('chartSOBB', 'SO/BB', sobbData, commonSobbPts, 'rgb(196,131,58)', 'rgb(74,26,110)');
+}
+
+// ── Pitching stats for report ──
+function computePitchingStats() {
+  return pitchers.map(p => {
+    const ipDec  = Math.floor(p.ip) + (p.ip % 1)*10/3;
+    const kper9  = ipDec > 0 ? p.k/ipDec*9 : 0;
+    const bbper9 = ipDec > 0 ? p.bb/ipDec*9 : 0;
+    const kbb    = p.bb > 0 ? p.k/p.bb : p.k;
+    let s = 0;
+    if (kper9 >= 10) s+=3; else if (kper9 >= 8) s+=2; else if (kper9 >= 6) s+=1;
+    if (bbper9 <= 2) s+=3; else if (bbper9 <= 3.5) s+=2; else if (bbper9 <= 5) s+=1;
+    if (kbb >= 3) s+=2; else if (kbb >= 2) s+=1;
+    if (p.strikePct >= 65) s+=1;
+    const grade = s>=7?'A':s>=5?'B':s>=3?'C':s>=1?'D':'F';
+    return { ...p, ipDec, kper9, bbper9, kbb, grade };
+  });
+}
+
+function pitchingAgg(stats) {
+  const ip = stats.reduce((s,p) => s+p.ipDec,0);
+  const k  = stats.reduce((s,p) => s+p.k,0);
+  const bb = stats.reduce((s,p) => s+p.bb,0);
+  const st = stats.reduce((s,p) => s+p.strikes,0);
+  const pi = stats.reduce((s,p) => s+p.pitches,0);
+  return {
+    totalIP: ip.toFixed(1), totalK: k, totalBB: bb,
+    teamKper9:     ip>0 ? (k/ip*9).toFixed(2)    : '—',
+    teamStrikePct: pi>0 ? (st/pi*100).toFixed(1) : '—',
+    teamBBK:       k>0  ? (bb/k).toFixed(2)       : '—',
+  };
+}
+
+// ── Generate Report ──
+async function generateReport() {
+  if (!pitchers.length && !games.length) { alert('No data loaded. Select a team first.'); return; }
+  const season     = $('season').value   || '2025';
+  const leagueName = $('league').value   || 'Unknown League';
+  const teamName   = currentTeam         || 'Unknown Team';
+  const btn = $('genBtn');
+  btn.disabled = true; btn.textContent = 'Analyzing…';
+
+  const pStats      = computePitchingStats();
+  const pAgg        = pitchingAgg(pStats);
+  const tot         = games.length ? calcTotals(games) : null;
+  const commonGames = games.filter(g => g.common);
+  const coTot       = calcTotals(commonGames);
+  const coName      = commonOpponentName(games);
+
+  const reportEl = $('report');
+  reportEl.style.display = 'block';
+  reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, null);
+  reportEl.scrollIntoView({ behavior:'smooth', block:'start' });
+
+  const pitchText = pStats.length ? pStats.map(p =>
+    `#${p.num}: ${p.ip} IP | Strike%: ${p.strikePct.toFixed(1)}% | BB: ${p.bb} | K: ${p.k} | BB/K: ${p.bbk!==null?p.bbk.toFixed(2):'N/A'} | K/9: ${p.kper9.toFixed(2)} | Grade: ${p.grade}`
+  ).join('\n') : 'No pitching data.';
+
+  const batText = tot ? `Season (${tot.count} games): AVG: ${fmt(tot.avg)} | OBP: ${fmt(tot.obp)} | SO/BB: ${tot.sobb!==null?tot.sobb.toFixed(2):'N/A'} | AB: ${tot.ab} | H: ${tot.h} | R: ${tot.r} | RBI: ${tot.rbi} | BB: ${tot.bb} | SO: ${tot.so}` : 'No batting data.';
+
+  const coText = coTot && coTot.count > 0
+    ? `vs. Common Opponent${coName ? ' ('+coName+')' : ''} (${coTot.count} games): AVG: ${fmt(coTot.avg)} | OBP: ${fmt(coTot.obp)} | SO/BB: ${coTot.sobb!==null?coTot.sobb.toFixed(2):'N/A'} | AB: ${coTot.ab} | H: ${coTot.h} | R: ${coTot.r} | RBI: ${coTot.rbi}`
+    : 'No common opponent data.';
+
+  const prompt = `You are a professional baseball scout. Pitchers are identified by jersey number only.
+
+Team: ${teamName} | Season: ${season} | League: ${leagueName}
+Pitching: Strike%: ${pAgg.teamStrikePct}% | BB/K: ${pAgg.teamBBK} | K/9: ${pAgg.teamKper9}
+
+PITCHERS:
+${pitchText}
+
+BATTING:
+${batText}
+${coText}
+
+Write a 4-5 paragraph scouting report: (1) overall team identity, (2) pitching staff — command and strikeout profile, (3) offensive profile — season-long performance and plate discipline, (4) common opponent performance${coTot && coTot.count > 0 ? ' — compare season stats vs. common opponent stats and note any meaningful differences' : ' — no common opponent data available'}, (5) tactical recommendations for opposing teams. Professional scouting voice. Under 400 words.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1200, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await resp.json();
+    const narrative = data.content?.map(b=>b.text||'').join('') || 'Narrative unavailable.';
+    reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, narrative);
+  } catch(e) {
+    reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, 'AI narrative unavailable. Review the stats and findings above.');
+  }
+  btn.disabled = false; btn.textContent = 'Generate Scouting Report';
+}
+
+// ── Build Report HTML ──
+function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, narrative) {
+  const now = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+  const pitcherRows = pStats.map(p => `
+    <div class="pitcher-row">
+      <div class="pr-num">#${p.num}</div>
+      <div class="pr-stats">
+        <div class="prs"><span class="v">${p.ip}</span><span class="l">IP</span></div>
+        <div class="prs"><span class="v">${p.k}</span><span class="l">K</span></div>
+        <div class="prs"><span class="v">${p.bb}</span><span class="l">BB</span></div>
+        <div class="prs hi"><span class="v">${p.strikePct.toFixed(1)}%</span><span class="l">Str%</span></div>
+        <div class="prs hi"><span class="v">${p.bbk!==null?p.bbk.toFixed(2):'—'}</span><span class="l">BB/K</span></div>
+        <div class="prs"><span class="v">${p.kper9.toFixed(1)}</span><span class="l">K/9</span></div>
+      </div>
+      <div class="pr-grade grade-${p.grade}">${p.grade}</div>
+    </div>
+  `).join('') || '<p style="opacity:.4;font-style:italic;font-size:.82rem;padding:8px 0">No pitching data loaded.</p>';
+
+  // Season batting card
+  let batCard = '<p style="opacity:.4;font-style:italic;font-size:.82rem;padding:8px 0">No batting data loaded.</p>';
+  if (tot) {
+    batCard = `
+      <div class="bat-report-card">
+        <div class="bat-card-label">📊 Season — ${tot.count} game${tot.count!==1?'s':''}</div>
+        <div class="bat-kpis">
+          <div class="bkpi"><span class="bv">${fmt(tot.avg)}</span><span class="bl">AVG</span></div>
+          <div class="bkpi"><span class="bv">${fmt(tot.obp)}</span><span class="bl">OBP</span></div>
+          <div class="bkpi"><span class="bv">${tot.sobb!==null?tot.sobb.toFixed(2):'—'}</span><span class="bl">SO/BB</span></div>
+        </div>
+        <hr class="bat-divider">
+        <div class="bat-totals-label">Raw totals</div>
+        <div class="bat-raw">
+          <div class="brt"><span class="rv">${tot.ab}</span><span class="rl">AB</span></div>
+          <div class="brt"><span class="rv">${tot.h}</span><span class="rl">H</span></div>
+          <div class="brt"><span class="rv">${tot.r}</span><span class="rl">R</span></div>
+          <div class="brt"><span class="rv">${tot.rbi}</span><span class="rl">RBI</span></div>
+          <div class="brt"><span class="rv">${tot.bb}</span><span class="rl">BB</span></div>
+        </div>
+      </div>`;
+  }
+
+  // Common opponent card
+  let coCard = '';
+  if (coTot && coTot.count > 0) {
+    const avgDiff  = tot ? (coTot.avg  - tot.avg) : 0;
+    const obpDiff  = tot ? (coTot.obp  - tot.obp) : 0;
+    const diffSign = n => n > 0.005 ? `▲ +${fmt(Math.abs(n))}` : n < -0.005 ? `▼ ${fmt(Math.abs(n))}` : '≈ same';
+    coCard = `
+      <div class="bat-report-card common-card">
+        <div class="bat-card-label">🎯 Common Opponent${coName ? ' — '+coName : ''} (${coTot.count} game${coTot.count!==1?'s':''})</div>
+        <div class="bat-kpis">
+          <div class="bkpi">
+            <span class="bv">${fmt(coTot.avg)}</span>
+            <span class="bl">AVG</span>
+            ${tot ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;display:block;margin-top:2px;opacity:.6">${diffSign(avgDiff)}</span>` : ''}
+          </div>
+          <div class="bkpi">
+            <span class="bv">${fmt(coTot.obp)}</span>
+            <span class="bl">OBP</span>
+            ${tot ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;display:block;margin-top:2px;opacity:.6">${diffSign(obpDiff)}</span>` : ''}
+          </div>
+          <div class="bkpi">
+            <span class="bv">${coTot.sobb!==null?coTot.sobb.toFixed(2):'—'}</span>
+            <span class="bl">SO/BB</span>
+          </div>
+        </div>
+        <hr class="bat-divider">
+        <div class="bat-totals-label">Raw totals</div>
+        <div class="bat-raw">
+          <div class="brt"><span class="rv">${coTot.ab}</span><span class="rl">AB</span></div>
+          <div class="brt"><span class="rv">${coTot.h}</span><span class="rl">H</span></div>
+          <div class="brt"><span class="rv">${coTot.r}</span><span class="rl">R</span></div>
+          <div class="brt"><span class="rv">${coTot.rbi}</span><span class="rl">RBI</span></div>
+          <div class="brt"><span class="rv">${coTot.bb}</span><span class="rl">BB</span></div>
+        </div>
+      </div>`;
+  }
+
+  const strengths  = getStrengths(pStats, pAgg, tot, coTot, coName);
+  const weaknesses = getWeaknesses(pStats, pAgg, tot, coTot, coName);
+
+  const narrativeHTML = narrative === null
+    ? `<div class="loading-indicator"><div class="dots"><span></span><span></span><span></span></div><span>Generating narrative…</span></div>`
+    : `<div class="narrative-text">${narrative}</div>`;
+
+  const batAVG  = tot ? fmt(tot.avg)  : '—';
+  const batOBP  = tot ? fmt(tot.obp)  : '—';
+  const batSOBB = tot && tot.sobb !== null ? tot.sobb.toFixed(2) : '—';
+  const coAVG   = coTot ? fmt(coTot.avg)  : '—';
+  const coOBP   = coTot ? fmt(coTot.obp)  : '—';
+  const coSOBB  = coTot && coTot.sobb !== null ? coTot.sobb.toFixed(2) : '—';
+
+  return `
+    <div class="report-masthead">
+      <div>
+        <div class="masthead-eyebrow">Full Team Scouting Report</div>
+        <div class="masthead-team">${teamName}</div>
+        <div class="masthead-meta">${leagueName} · ${season} · ${now}</div>
+      </div>
+    </div>
+
+    <div class="report-dual-strip">
+      <div class="report-strip pitching-strip">
+        <div class="strip-eyebrow">⚾ Pitching</div>
+        <div class="rstat"><span class="rstat-val">${pAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
+        <div class="rstat"><span class="rstat-val">${pAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
+        <div class="rstat"><span class="rstat-val">${pAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
+      </div>
+      <div class="report-strip batting-strip">
+        <div class="strip-eyebrow">📊 Season Batting${tot ? ' ('+tot.count+'g)' : ''}</div>
+        <div class="rstat"><span class="rstat-val">${batAVG}</span><span class="rstat-lbl">AVG</span></div>
+        <div class="rstat"><span class="rstat-val">${batOBP}</span><span class="rstat-lbl">OBP</span></div>
+        <div class="rstat"><span class="rstat-val">${batSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
+      </div>
+    </div>
+
+    ${coTot && coTot.count > 0 ? `
+    <div class="report-strip common-strip">
+      <div class="strip-eyebrow">🎯 Common Opponent${coName ? ' — '+coName : ''}${coTot ? ' ('+coTot.count+'g)' : ''}</div>
+      <div class="rstat"><span class="rstat-val">${coAVG}</span><span class="rstat-lbl">AVG</span></div>
+      <div class="rstat"><span class="rstat-val">${coOBP}</span><span class="rstat-lbl">OBP</span></div>
+      <div class="rstat"><span class="rstat-val">${coSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
+    </div>` : ''}
+
+    <div class="report-columns">
+      <div class="report-section report-col-left">
+        <div class="report-section-heading pitching">⚾ Pitching Staff</div>
+        ${pitcherRows}
+      </div>
+      <div class="report-section">
+        <div class="report-section-heading batting">📊 Offensive Profile</div>
+        ${batCard}
+        ${coCard}
+      </div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-heading findings">Key Findings</div>
+      <div class="findings-grid">
+        ${strengths.map(s  => `<div class="finding strength"><div class="finding-type">✦ Strength</div><p>${s}</p></div>`).join('')}
+        ${weaknesses.map(w => `<div class="finding weakness"><div class="finding-type">▲ Concern</div><p>${w}</p></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-heading narrative">Scout's Analysis <span class="ai-badge">AI</span></div>
+      ${narrativeHTML}
+    </div>
+  `;
+}
+
+function getStrengths(pStats, pAgg, tot, coTot, coName) {
+  const out = [];
+  if (pStats.length) {
+    const ace = pStats.reduce((a,b) => b.kper9>a.kper9?b:a, pStats[0]);
+    if (ace) out.push(`#${ace.num} leads the staff at ${ace.kper9.toFixed(2)} K/9 — a premier swing-and-miss arm.`);
+    if (parseFloat(pAgg.teamStrikePct) >= 62)
+      out.push(`Staff strike rate of ${pAgg.teamStrikePct}% reflects consistent ability to work ahead in counts.`);
+  }
+  if (tot) {
+    if (tot.avg >= .270) out.push(`Season AVG of ${fmt(tot.avg)} signals a dangerous, contact-oriented lineup.`);
+    if (tot.obp >= .340) out.push(`Season OBP of ${fmt(tot.obp)} demonstrates strong plate discipline.`);
+  }
+  if (coTot && coTot.count > 0 && tot) {
+    if (coTot.avg > tot.avg + .015)
+      out.push(`Team hits notably better vs. ${coName || 'the common opponent'} — AVG ${fmt(coTot.avg)} vs. season ${fmt(tot.avg)}.`);
+  }
+  return out.slice(0,3);
+}
+
+function getWeaknesses(pStats, pAgg, tot, coTot, coName) {
+  const out = [];
+  if (pStats.length) {
+    const wildest = pStats.reduce((a,b) => b.bbper9>a.bbper9?b:a, pStats[0]);
+    if (wildest && wildest.bbper9 > 4)
+      out.push(`#${wildest.num} is the control liability at ${wildest.bbper9.toFixed(2)} BB/9 — patient approaches yield free passes.`);
+    if (parseFloat(pAgg.teamStrikePct) < 60)
+      out.push(`Staff strike rate of ${pAgg.teamStrikePct}% is below norms — work counts to inflate pitch totals.`);
+  }
+  if (tot) {
+    if (tot.sobb !== null && tot.sobb > 2.5)
+      out.push(`SO/BB of ${tot.sobb.toFixed(2)} exposes swing-heavy tendencies — challenge this lineup with strikes.`);
+    if (tot.obp < .310)
+      out.push(`Season OBP of ${fmt(tot.obp)} reveals limited plate discipline — pitchers can attack confidently.`);
+  }
+  if (coTot && coTot.count > 0 && tot) {
+    if (coTot.avg < tot.avg - .015)
+      out.push(`Team struggles vs. ${coName || 'the common opponent'} — AVG drops to ${fmt(coTot.avg)} vs. season ${fmt(tot.avg)}.`);
+  }
+  return out.slice(0,3);
+}
+
+$('sheetUrl').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); onUrlChange(); } });
+</script>
+</body>
+</html>
