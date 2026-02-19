@@ -353,30 +353,6 @@
 
 
 
-  <!-- Pitching Panel -->
-  <div class="card" id="pitchingPanel" style="display:none">
-    <div class="panel-header">
-      <div class="panel-title">
-        <span class="section-label" id="pitchingLabel" style="margin-bottom:0">Pitching Staff</span>
-        <span class="panel-badge pitching">Pitching</span>
-      </div>
-      <button class="refresh-btn" id="refreshBtn" onclick="reloadCurrentTeam()">↻ Refresh</button>
-    </div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>IP</th><th>Pit</th><th>Str</th><th>BB</th><th>K</th>
-            <th class="calc-p">Str%</th><th class="calc-p">BB/K</th>
-          </tr>
-        </thead>
-        <tbody id="pitchingBody">
-          <tr><td colspan="8"><div class="empty-state">Select a team above</div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
   <!-- Batting Panel -->
   <div class="card" id="battingPanel" style="display:none">
     <div class="panel-header">
@@ -384,6 +360,7 @@
         <span class="section-label" id="battingLabel" style="margin-bottom:0">Batting — Game Log</span>
         <span class="panel-badge batting">Batting</span>
       </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="reloadCurrentTeam()">↻ Refresh</button>
     </div>
 
     <!-- Season Summary -->
@@ -628,10 +605,9 @@ async function selectTeam(team) {
   renderPitchingTable();
   renderBattingPanel(true);
 
-  ['pitchingPanel','battingPanel','generateWrap'].forEach(id => {
+  ['battingPanel','generateWrap'].forEach(id => {
     $(id).style.display = 'block';
   });
-  $('pitchingLabel').textContent = `Pitching — ${team}`;
   $('battingLabel').textContent  = `Batting — ${team}`;
 
   const parts = [];
