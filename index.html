@@ -351,7 +351,44 @@
   <!-- Status -->
   <div id="statusBar"></div>
 
+  <!-- Season Info -->
+  <div class="card" id="metaSection" style="display:none">
+    <span class="section-label" id="metaLabel">Season Information</span>
+    <div class="meta-grid">
+      <div class="field">
+        <label>Season / Year</label>
+        <input type="text" id="season" placeholder="2025" value="2025">
+      </div>
+      <div class="field">
+        <label>League / Division</label>
+        <input type="text" id="league" placeholder="e.g. AAA Pacific Coast">
+      </div>
+    </div>
+  </div>
 
+  <!-- Pitching Panel -->
+  <div class="card" id="pitchingPanel" style="display:none">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span class="section-label" id="pitchingLabel" style="margin-bottom:0">Pitching Staff</span>
+        <span class="panel-badge pitching">Pitching</span>
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="reloadCurrentTeam()">↻ Refresh</button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>IP</th><th>Pit</th><th>Str</th><th>BB</th><th>K</th>
+            <th class="calc-p">Str%</th><th class="calc-p">BB/K</th>
+          </tr>
+        </thead>
+        <tbody id="pitchingBody">
+          <tr><td colspan="8"><div class="empty-state">Select a team above</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
   <!-- Batting Panel -->
   <div class="card" id="battingPanel" style="display:none">
@@ -360,7 +397,6 @@
         <span class="section-label" id="battingLabel" style="margin-bottom:0">Batting — Game Log</span>
         <span class="panel-badge batting">Batting</span>
       </div>
-      <button class="refresh-btn" id="refreshBtn" onclick="reloadCurrentTeam()">↻ Refresh</button>
     </div>
 
     <!-- Season Summary -->
@@ -605,9 +641,11 @@ async function selectTeam(team) {
   renderPitchingTable();
   renderBattingPanel(true);
 
-  ['battingPanel','generateWrap'].forEach(id => {
+  ['metaSection','pitchingPanel','battingPanel','generateWrap'].forEach(id => {
     $(id).style.display = 'block';
   });
+  $('metaLabel').textContent     = `Season — ${team}`;
+  $('pitchingLabel').textContent = `Pitching — ${team}`;
   $('battingLabel').textContent  = `Batting — ${team}`;
 
   const parts = [];
@@ -642,7 +680,7 @@ function renderPitchingTable() {
   }
   tbody.innerHTML = pitchers.map(p => `
     <tr>
-      <td>#${p.num}</td><td>${p.ipDisplay}</td><td>${p.pitches}</td><td>${p.strikes}</td>
+      <td>#${p.num}</td><td>${p.ip}</td><td>${p.pitches}</td><td>${p.strikes}</td>
       <td>${p.bb}</td><td>${p.k}</td>
       <td class="calc-p">${p.strikePct.toFixed(1)}%</td>
       <td class="calc-p">${p.bbk !== null ? p.bbk.toFixed(2) : '—'}</td>
@@ -802,53 +840,19 @@ function renderCharts(coTot, coName) {
 }
 
 // ── Pitching stats for report ──
-function ipToDecimal(ip) {
-  // Baseball IP: 6.2 means 6 innings + 2 outs = 6.667 decimal
-  const innings = Math.floor(ip);
-  const outs    = Math.round((ip % 1) * 10); // e.g. 0.2 -> 2 outs
-  return innings + outs / 3;
-}
-
-function decimalToIp(dec) {
-  // Convert decimal innings back to baseball notation
-  // e.g. 6.667 -> "6.2", 7.0 -> "7.0", 4.333 -> "4.1"
-  const innings = Math.floor(dec + 0.001); // small epsilon for float safety
-  const remainder = dec - innings;
-  const outs = Math.min(2, Math.round(remainder * 3)); // clamp to 0,1,2
-  return innings + '.' + outs;
-}
-
 function computePitchingStats() {
-  // Roll up multiple outings per pitcher by jersey number
-  const byNum = {};
-  pitchers.forEach(p => {
-    if (!byNum[p.num]) {
-      byNum[p.num] = { num: p.num, ip: 0, pitches: 0, strikes: 0, bb: 0, k: 0, outings: 0 };
-    }
-    byNum[p.num].ip      += ipToDecimal(p.ip);
-    byNum[p.num].pitches += p.pitches;
-    byNum[p.num].strikes += p.strikes;
-    byNum[p.num].bb      += p.bb;
-    byNum[p.num].k       += p.k;
-    byNum[p.num].outings += 1;
-  });
-
-  return Object.values(byNum).map(p => {
-    const ipDec     = p.ip; // already decimal from rollup
-    const kper9     = ipDec > 0 ? p.k/ipDec*9 : 0;
-    const bbper9    = ipDec > 0 ? p.bb/ipDec*9 : 0;
-    const kbb       = p.bb > 0 ? p.k/p.bb : p.k;
-    const strikePct = p.pitches > 0 ? p.strikes/p.pitches*100 : 0;
-    const bbk       = p.k > 0 ? p.bb/p.k : null;
-    // Display IP back in baseball notation (e.g. 6.667 -> 6.2)
-    const ipDisplay = decimalToIp(ipDec);
+  return pitchers.map(p => {
+    const ipDec  = Math.floor(p.ip) + (p.ip % 1)*10/3;
+    const kper9  = ipDec > 0 ? p.k/ipDec*9 : 0;
+    const bbper9 = ipDec > 0 ? p.bb/ipDec*9 : 0;
+    const kbb    = p.bb > 0 ? p.k/p.bb : p.k;
     let s = 0;
     if (kper9 >= 10) s+=3; else if (kper9 >= 8) s+=2; else if (kper9 >= 6) s+=1;
     if (bbper9 <= 2) s+=3; else if (bbper9 <= 3.5) s+=2; else if (bbper9 <= 5) s+=1;
     if (kbb >= 3) s+=2; else if (kbb >= 2) s+=1;
-    if (strikePct >= 65) s+=1;
+    if (p.strikePct >= 65) s+=1;
     const grade = s>=7?'A':s>=5?'B':s>=3?'C':s>=1?'D':'F';
-    return { ...p, ipDec, ipDisplay, strikePct, bbk, kper9, bbper9, kbb, grade };
+    return { ...p, ipDec, kper9, bbper9, kbb, grade };
   });
 }
 
@@ -858,9 +862,8 @@ function pitchingAgg(stats) {
   const bb = stats.reduce((s,p) => s+p.bb,0);
   const st = stats.reduce((s,p) => s+p.strikes,0);
   const pi = stats.reduce((s,p) => s+p.pitches,0);
-  const ipDisplay = decimalToIp(ip);
   return {
-    totalIP: ipDisplay, totalK: k, totalBB: bb,
+    totalIP: ip.toFixed(1), totalK: k, totalBB: bb,
     teamKper9:     ip>0 ? (k/ip*9).toFixed(2)    : '—',
     teamStrikePct: pi>0 ? (st/pi*100).toFixed(1) : '—',
     teamBBK:       k>0  ? (bb/k).toFixed(2)       : '—',
@@ -870,8 +873,8 @@ function pitchingAgg(stats) {
 // ── Generate Report ──
 async function generateReport() {
   if (!pitchers.length && !games.length) { alert('No data loaded. Select a team first.'); return; }
-  const season     = new Date().getFullYear().toString();
-  const leagueName = '';
+  const season     = $('season').value   || '2025';
+  const leagueName = $('league').value   || 'Unknown League';
   const teamName   = currentTeam         || 'Unknown Team';
   const btn = $('genBtn');
   btn.disabled = true; btn.textContent = 'Analyzing…';
@@ -889,7 +892,7 @@ async function generateReport() {
   reportEl.scrollIntoView({ behavior:'smooth', block:'start' });
 
   const pitchText = pStats.length ? pStats.map(p =>
-    `#${p.num}: ${p.ipDisplay} IP (${p.outings} outing${p.outings!==1?'s':''}) | Strike%: ${p.strikePct.toFixed(1)}% | BB: ${p.bb} | K: ${p.k} | BB/K: ${p.bbk!==null?p.bbk.toFixed(2):'N/A'} | K/9: ${p.kper9.toFixed(2)} | Grade: ${p.grade}`
+    `#${p.num}: ${p.ip} IP | Strike%: ${p.strikePct.toFixed(1)}% | BB: ${p.bb} | K: ${p.k} | BB/K: ${p.bbk!==null?p.bbk.toFixed(2):'N/A'} | K/9: ${p.kper9.toFixed(2)} | Grade: ${p.grade}`
   ).join('\n') : 'No pitching data.';
 
   const batText = tot ? `Season (${tot.count} games): AVG: ${fmt(tot.avg)} | OBP: ${fmt(tot.obp)} | SO/BB: ${tot.sobb!==null?tot.sobb.toFixed(2):'N/A'} | AB: ${tot.ab} | H: ${tot.h} | R: ${tot.r} | RBI: ${tot.rbi} | BB: ${tot.bb} | SO: ${tot.so}` : 'No batting data.';
@@ -934,7 +937,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
     <div class="pitcher-row">
       <div class="pr-num">#${p.num}</div>
       <div class="pr-stats">
-        <div class="prs"><span class="v">${p.ipDisplay}</span><span class="l">IP</span></div>
+        <div class="prs"><span class="v">${p.ip}</span><span class="l">IP</span></div>
         <div class="prs"><span class="v">${p.k}</span><span class="l">K</span></div>
         <div class="prs"><span class="v">${p.bb}</span><span class="l">BB</span></div>
         <div class="prs hi"><span class="v">${p.strikePct.toFixed(1)}%</span><span class="l">Str%</span></div>
@@ -1024,7 +1027,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div>
         <div class="masthead-eyebrow">Full Team Scouting Report</div>
         <div class="masthead-team">${teamName}</div>
-        <div class="masthead-meta">${now}</div>
+        <div class="masthead-meta">${leagueName} · ${season} · ${now}</div>
       </div>
     </div>
 
