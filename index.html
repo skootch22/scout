@@ -631,7 +631,6 @@ async function selectTeam(team) {
     batError = e.message;
   }
 
-  renderPitchingTable();
   renderBattingPanel(true);
 
   ['battingPanel','generateWrap'].forEach(id => {
