@@ -323,21 +323,21 @@
   <!-- Sheet Config -->
   <div class="card">
     <span class="section-label">Google Sheet Data Source</span>
+    <div class="field" style="margin-bottom:14px">
+      <label>Google Sheet URL</label>
+      <input type="url" id="sheetUrl" placeholder="Paste your Google Sheet URL…" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
     <div style="display:flex;gap:10px;align-items:flex-end">
       <div class="field" style="flex:1">
-        <label>Google Sheet URL</label>
-        <input type="url" id="sheetUrl" placeholder="Paste your Google Sheet URL…" autocomplete="off" autocorrect="off" spellcheck="false">
+        <label>Team Name (must match tab prefix exactly)</label>
+        <input type="text" id="teamNameInput" placeholder="e.g. Xpress Fall Ball" autocorrect="off" spellcheck="false">
       </div>
-      <button onclick="onUrlChange()" id="connectBtn" style="
+      <button onclick="onConnectClick()" id="connectBtn" style="
         font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
         font-weight:600;background:var(--green);color:var(--cream);border:2px solid var(--green);
         padding:10px 16px;cursor:pointer;white-space:nowrap;min-height:44px;flex-shrink:0;
         box-shadow:3px 3px 0 var(--dark);transition:all .15s;
-      ">Connect</button>
-    </div>
-    <div id="teamTabsWrap">
-      <span class="section-label" style="margin-top:14px;display:block">Select Team</span>
-      <div class="team-tabs" id="teamTabs"></div>
+      ">Load</button>
     </div>
     <div class="sheet-hint">
       <strong>Tab naming:</strong> "TeamName - Pitching" &amp; "TeamName - Batting"<br>
@@ -472,7 +472,6 @@ let pitchers    = [];
 let games       = [];
 let currentTeam = '';
 let sheetId     = '';
-let allTabs     = [];
 let chartInstances = {};
 
 const $ = id => document.getElementById(id);
@@ -489,10 +488,22 @@ function setStatus(type, msg) {
   bar.className = type;
   bar.innerHTML = type === 'loading'
     ? `<div class="dots"><span></span><span></span><span></span></div><span>${msg}</span>`
-    : (type === 'success' ? `<span>✔ ${msg}</span>` : `<span>✖ ${msg}</span>`);
+    : (type === 'success' ? `<span>&#x2714; ${msg}</span>` : `<span>&#x2716; ${msg}</span>`);
 }
 function fmt(n, d = 3) { return n.toFixed(d).replace(/^0\./, '.'); }
 
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+// ── Connect: no tab discovery, use manual team name ──
+function onConnectClick() {
+  const url  = $('sheetUrl').value.trim();
+  const team = $('teamNameInput').value.trim();
+  if (!url)  { setStatus('error', 'Please paste your Google Sheet URL.'); return; }
+  if (!team) { setStatus('error', 'Please enter the team name exactly as it appears in your tab.'); return; }
+  sheetId = extractSheetId(url);
+  if (!sheetId) { setStatus('error', 'Could not find a sheet ID in that URL. Use the regular editing URL.'); return; }
+  selectTeam(team);
+}
 // ── CSV ──
 function parseCsvLine(line) {
   const r = []; let cur = '', inQ = false;
@@ -602,74 +613,33 @@ function commonOpponentName(gs) {
   return sorted.map(([name]) => name).join(', ');
 }
 
-// ── Tab Discovery ──
-async function onUrlChange() {
-  const url = $('sheetUrl').value.trim();
-  if (!url) return;
-  sheetId = extractSheetId(url);
-  if (!sheetId) { setStatus('error','Could not find a sheet ID in that URL.'); return; }
-  setStatus('loading','Connecting to Google Sheets…');
-  await discoverTabs();
-}
-
-async function discoverTabs() {
-  try {
-    const resp = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/pub?output=html`);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const html = await resp.text();
-    const matches = [...html.matchAll(/<li[^>]+data-sheet-index="(\d+)"[^>]*>\s*([^<]+)\s*<\/li>/g)];
-    allTabs = matches.length ? matches.map(m => m[2].trim()) : ['Sheet1'];
-    const teams = extractTeamNames(allTabs);
-    renderTeamButtons(teams.length ? teams : allTabs);
-    $('teamTabsWrap').style.display = 'block';
-    setStatus('success', `Found ${teams.length || allTabs.length} team(s). Tap one to load.`);
-  } catch(e) {
-    setStatus('error', `Cannot reach sheet. Make sure it's published via File → Share → Publish to web.`);
-  }
-}
-
-function extractTeamNames(tabs) {
-  const teams = new Set();
-  tabs.forEach(t => {
-    const m = t.match(/^(.+?)\s*[-–—]\s*(pitching|batting|hitting|offense|defense)/i);
-    if (m) teams.add(m[1].trim());
-  });
-  return [...teams].sort();
-}
-
-function findTab(team, typePattern) {
-  const re = new RegExp(`^${escRe(team)}\\s*[-–—]\\s*(${typePattern})`, 'i');
-  return allTabs.find(t => re.test(t)) || null;
-}
-
-function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
-
-function renderTeamButtons(teams) {
-  $('teamTabs').innerHTML = teams.map(t =>
-    `<button class="team-tab" onclick="selectTeam('${t.replace(/'/g,"\\'")}')">${t}</button>`
-  ).join('');
-}
-
-// ── Load Team ──
+// ── Load Team (builds tab names directly from team name) ──
 async function selectTeam(team) {
   currentTeam = team;
-  document.querySelectorAll('.team-tab').forEach(b =>
-    b.classList.toggle('active', b.textContent.trim() === team)
-  );
   setStatus('loading', `Loading ${team}…`);
   $('refreshBtn').disabled = true;
 
-  const pitchTab = findTab(team, 'pitching');
-  const batTab   = findTab(team, 'batting|hitting|offense');
+  const pitchTab = `${team} - Pitching`;
+  const batTab   = `${team} - Batting`;
 
   pitchers = [];
-  if (pitchTab) { try { pitchers = parsePitchingCsv(await fetchCsv(pitchTab)); } catch(e) {} }
+  let pitchError = null;
+  try {
+    pitchers = parsePitchingCsv(await fetchCsv(pitchTab));
+  } catch(e) {
+    pitchError = e.message;
+  }
 
   games = [];
-  if (batTab) { try { games = parseBattingCsv(await fetchCsv(batTab)); } catch(e) {} }
+  let batError = null;
+  try {
+    games = parseBattingCsv(await fetchCsv(batTab));
+  } catch(e) {
+    batError = e.message;
+  }
 
   renderPitchingTable();
-  renderBattingPanel(batTab);
+  renderBattingPanel(true);
 
   ['metaSection','pitchingPanel','battingPanel','generateWrap'].forEach(id => {
     $(id).style.display = 'block';
@@ -681,7 +651,13 @@ async function selectTeam(team) {
   const parts = [];
   if (pitchers.length) parts.push(`${pitchers.length} pitchers`);
   if (games.length)    parts.push(`${games.length} games`);
-  setStatus('success', `${team}: ${parts.join(' · ') || 'no data'} loaded.`);
+
+  if (!pitchers.length && !games.length) {
+    const detail = pitchError || batError || 'unknown error';
+    setStatus('error', `No data loaded — ${detail}. Tried: "${pitchTab}" and "${batTab}"`);
+  } else {
+    setStatus('success', `${team}: ${parts.join(' · ')} loaded.`);
+  }
   $('refreshBtn').disabled = false;
 }
 
@@ -1146,7 +1122,10 @@ function getWeaknesses(pStats, pAgg, tot, coTot, coName) {
   return out.slice(0,3);
 }
 
-$('sheetUrl').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); onUrlChange(); } });
+// Enter key on either input triggers load
+['sheetUrl','teamNameInput'].forEach(id => {
+  $(id).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); onConnectClick(); } });
+});
 </script>
 </body>
 </html>
