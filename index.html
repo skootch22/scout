@@ -523,7 +523,6 @@ async function selectTeam(team) {
     batError = e.message;
   }
 
-  renderBattingPanel(true);
 
   [].forEach(id => {
     $(id).style.display = 'block';
@@ -570,48 +569,7 @@ function renderPitchingTable() {
 }
 
 // ── Render Batting Panel ──
-function renderBattingPanel(batTab) {
-  const notice        = $('battingNotice');
-  const summaryWrap   = $('battingSummaryWrap');
-  const commonWrap    = $('commonSummaryWrap');
-  const noCommon      = $('noCommonNotice');
-  if (!games.length) {
-    summaryWrap.style.display = 'none';
-    commonWrap.style.display  = 'none';
-    noCommon.style.display    = 'none';
-    notice.style.display      = 'none';
-    return;
-  }
-
-  notice.style.display = 'none';
-
-  const tot         = calcTotals(games);
-  const commonGames = games.filter(g => g.common);
-  const coTot       = calcTotals(commonGames);
-  const coName      = commonOpponentName(games);
-
-  // Season summary
-  summaryWrap.style.display = 'block';
-  $('sumAVG').textContent   = fmt(tot.avg);
-  $('sumOBP').textContent   = fmt(tot.obp);
-  $('sumSOBB').textContent  = tot.sobb !== null ? tot.sobb.toFixed(2) : '—';
-  $('sumGames').textContent = `${games.length} game${games.length!==1?'s':''}`;
-
-  // Common opponent summary
-  if (coTot && coTot.count > 0) {
-    commonWrap.style.display = 'block';
-    noCommon.style.display   = 'none';
-    $('commonOppNameHeader').textContent = coName || 'Flagged games';
-    $('coAVG').textContent   = fmt(coTot.avg);
-    $('coOBP').textContent   = fmt(coTot.obp);
-    $('coSOBB').textContent  = coTot.sobb !== null ? coTot.sobb.toFixed(2) : '—';
-    $('coGames').textContent = `${coTot.count} game${coTot.count!==1?'s':''}`;
-  } else {
-    commonWrap.style.display = 'none';
-    noCommon.style.display   = 'block';
-  }
-
-}
+// batting data is used directly by generateReport via the games[] array
 
 // ── Charts ──
 
