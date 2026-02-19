@@ -177,15 +177,6 @@
   .chart-title { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; opacity: .5; margin-bottom: 8px; }
 
   /* ── GENERATE ── */
-  .generate-wrap { display: none; text-align: center; margin-bottom: 20px; }
-  .generate-btn {
-    font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; letter-spacing: .04em;
-    background: var(--green); color: var(--cream); border: 3px solid var(--green);
-    padding: 16px 32px; width: 100%; cursor: pointer;
-    box-shadow: 4px 4px 0 var(--dark); transition: all .15s; min-height: 56px;
-  }
-  .generate-btn:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--dark); }
-  .generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
   /* ── REPORT ── */
   #report { display: none; background: white; border: 2px solid var(--dark); box-shadow: 4px 4px 0 var(--dark); overflow: hidden; animation: slideIn .35s ease; }
@@ -290,7 +281,6 @@
     header h1 { font-size: 2rem; }
     .container { padding: 28px 24px; }
     .card { padding: 24px; box-shadow: 5px 5px 0 var(--dark); }
-    .generate-btn { width: auto; padding: 16px 48px; }
     .charts-grid { flex-direction: row; }
     .chart-wrap { flex: 1; }
     .report-masthead { padding: 28px 28px; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 16px; }
@@ -349,7 +339,8 @@
   <!-- Status -->
   <div id="statusBar"></div>
 
-
+  <!-- Report -->
+  <div id="report"></div>
 
   <!-- Batting Panel -->
   <div class="card" id="battingPanel" style="display:none">
@@ -399,14 +390,6 @@
       ⓘ No batting tab found. Add a tab named "<span id="expectedBattingTab"></span>" to your sheet.
     </div>
   </div>
-
-  <!-- Generate -->
-  <div class="generate-wrap" id="generateWrap">
-    <button class="generate-btn" onclick="generateReport()" id="genBtn">Generate Scouting Report</button>
-  </div>
-
-  <!-- Report -->
-  <div id="report"></div>
 
 </div>
 
@@ -601,7 +584,7 @@ async function selectTeam(team) {
 
   renderBattingPanel(true);
 
-  ['battingPanel','generateWrap'].forEach(id => {
+  ['battingPanel'].forEach(id => {
     $(id).style.display = 'block';
   });
   $('battingLabel').textContent  = `Batting — ${team}`;
@@ -613,10 +596,12 @@ async function selectTeam(team) {
   if (!pitchers.length && !games.length) {
     const detail = pitchError || batError || 'unknown error';
     setStatus('error', `No data loaded — ${detail}. Tried: "${pitchTab}" and "${batTab}"`);
+    if ($('refreshBtn')) $('refreshBtn').disabled = false;
   } else {
-    setStatus('success', `${team}: ${parts.join(' · ')} loaded.`);
+    setStatus('loading', `${team}: ${parts.join(' · ')} loaded. Generating report…`);
+    if ($('refreshBtn')) $('refreshBtn').disabled = false;
+    await generateReport();
   }
-  if ($('refreshBtn')) $('refreshBtn').disabled = false;
 }
 
 async function fetchCsv(tab) {
@@ -830,8 +815,7 @@ async function generateReport() {
   const season     = new Date().getFullYear().toString();
   const leagueName = '';
   const teamName   = currentTeam         || 'Unknown Team';
-  const btn = $('genBtn');
-  btn.disabled = true; btn.textContent = 'Analyzing…';
+
 
   const pStats      = computePitchingStats();
   const pAgg        = pitchingAgg(pStats);
@@ -843,7 +827,6 @@ async function generateReport() {
   const reportEl = $('report');
   reportEl.style.display = 'block';
   reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, null);
-  reportEl.scrollIntoView({ behavior:'smooth', block:'start' });
 
   const pitchText = pStats.length ? pStats.map(p =>
     `#${p.num}: ${p.ipDisplay} IP (${p.outings} outing${p.outings!==1?'s':''}) | Strike%: ${p.strikePct.toFixed(1)}% | BB: ${p.bb} | K: ${p.k} | BB/K: ${p.bbk!==null?p.bbk.toFixed(2):'N/A'} | K/9: ${p.kper9.toFixed(2)} | Grade: ${p.grade}`
@@ -880,7 +863,7 @@ Write a 4-5 paragraph scouting report: (1) overall team identity, (2) pitching s
   } catch(e) {
     reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, 'AI narrative unavailable. Review the stats and findings above.');
   }
-  btn.disabled = false; btn.textContent = 'Generate Scouting Report';
+
 }
 
 // ── Build Report HTML ──
