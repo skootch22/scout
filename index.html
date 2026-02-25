@@ -657,6 +657,38 @@ function computePitchingStats() {
   });
 }
 
+function computePitchingStatsForGames(gameNumSet) {
+  // Same rollup as computePitchingStats but filtered to a set of game numbers
+  const byNum = {};
+  pitchers.filter(p => gameNumSet.has(p.game)).forEach(p => {
+    if (!byNum[p.num]) {
+      byNum[p.num] = { num: p.num, ip: 0, pitches: 0, strikes: 0, bb: 0, k: 0, outings: 0 };
+    }
+    byNum[p.num].ip      += ipToDecimal(p.ip);
+    byNum[p.num].pitches += p.pitches;
+    byNum[p.num].strikes += p.strikes;
+    byNum[p.num].bb      += p.bb;
+    byNum[p.num].k       += p.k;
+    byNum[p.num].outings += 1;
+  });
+  return Object.values(byNum).map(p => {
+    const ipDec     = p.ip;
+    const kper9     = ipDec > 0 ? p.k/ipDec*9 : 0;
+    const bbper9    = ipDec > 0 ? p.bb/ipDec*9 : 0;
+    const kbb       = p.bb > 0 ? p.k/p.bb : p.k;
+    const strikePct = p.pitches > 0 ? p.strikes/p.pitches*100 : 0;
+    const bbk       = p.k > 0 ? p.bb/p.k : null;
+    const ipDisplay = decimalToIp(ipDec);
+    let s = 0;
+    if (kper9 >= 10) s+=3; else if (kper9 >= 8) s+=2; else if (kper9 >= 6) s+=1;
+    if (bbper9 <= 2) s+=3; else if (bbper9 <= 3.5) s+=2; else if (bbper9 <= 5) s+=1;
+    if (kbb >= 3) s+=2; else if (kbb >= 2) s+=1;
+    if (strikePct >= 65) s+=1;
+    const grade = s>=7?'A':s>=5?'B':s>=3?'C':s>=1?'D':'F';
+    return { ...p, ipDec, ipDisplay, strikePct, bbk, kper9, bbper9, kbb, grade };
+  });
+}
+
 function pitchingAgg(stats) {
   const ip = stats.reduce((s,p) => s+p.ipDec,0);
   const k  = stats.reduce((s,p) => s+p.k,0);
@@ -687,17 +719,20 @@ async function generateReport() {
   const coTot       = calcTotals(commonGames);
   const coName      = commonOpponentName(games);
 
+  // Common opponent pitching — filter to games flagged as common
+  const coGameNums  = new Set(Object.entries(gameIndex).filter(([,v]) => v.common).map(([k]) => k));
+  const coPStats    = coGameNums.size > 0 ? computePitchingStatsForGames(coGameNums) : [];
+  const coPAgg      = coPStats.length > 0 ? pitchingAgg(coPStats) : null;
+
   const reportEl = $('report');
   reportEl.style.display = 'block';
-  reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName);
-
-  reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName);
+  reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg);
   $('statusBar').className = '';
   $('statusBar').innerHTML = '';
 }
 
 // ── Build Report HTML ──
-function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName) {
+function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg) {
   const now = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 
   const pitcherRows = pStats.map(p => `
@@ -714,6 +749,21 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="pr-grade grade-${p.grade}"></div>
     </div>
   `).join('') || '<p style="opacity:.4;font-style:italic;font-size:.82rem;padding:8px 0">No pitching data loaded.</p>';
+
+  const coPitcherRows = coPStats && coPStats.length > 0 ? coPStats.map(p => `
+    <div class="pitcher-row">
+      <div class="pr-num">#${p.num}</div>
+      <div class="pr-stats">
+        <div class="prs"><span class="v">${p.ipDisplay}</span><span class="l">IP</span></div>
+        <div class="prs"><span class="v">${p.k}</span><span class="l">K</span></div>
+        <div class="prs"><span class="v">${p.bb}</span><span class="l">BB</span></div>
+        <div class="prs hi"><span class="v">${p.strikePct.toFixed(1)}%</span><span class="l">Str%</span></div>
+        <div class="prs hi"><span class="v">${p.bbk!==null?p.bbk.toFixed(2):'—'}</span><span class="l">BB/K</span></div>
+        <div class="prs"><span class="v">${p.kper9.toFixed(1)}</span><span class="l">K/9</span></div>
+      </div>
+      <div class="pr-grade grade-${p.grade}"></div>
+    </div>
+  `).join('') : '';
 
   // Season batting card
   let batCard = '<p style="opacity:.4;font-style:italic;font-size:.82rem;padding:8px 0">No batting data loaded.</p>';
@@ -801,9 +851,21 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
     </div>
 
     <div class="report-section">
-      <div class="report-section-heading pitching">⚾ Pitching Staff</div>
+      <div class="report-section-heading pitching">⚾ Pitching Staff — Season</div>
       ${pitcherRows}
     </div>
+
+    ${coPStats && coPStats.length > 0 ? `
+    <div class="report-strip common-strip">
+      <div class="strip-eyebrow">🎯 Common Opponent Pitching${coName ? ' — '+coName : ''}</div>
+      <div class="rstat"><span class="rstat-val">${coPAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
+      <div class="rstat"><span class="rstat-val">${coPAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
+      <div class="rstat"><span class="rstat-val">${coPAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
+    </div>
+    <div class="report-section">
+      <div class="report-section-heading common">🎯 Pitching vs. Common Opponent</div>
+      ${coPitcherRows}
+    </div>` : ''}
 
     <div class="report-section">
       <div class="report-section-heading findings">Key Findings</div>
