@@ -344,6 +344,7 @@ let pitchers    = [];
 let games       = [];
 let currentTeam = '';
 let sheetId     = '11RIKkgh2hpozY3boJ6iqK_XA9-iurofS7Z5ZyECCa8A'; // hardcoded
+let gameIndex   = {}; // game# -> { opponent, common } from Games tab
 
 const $ = id => document.getElementById(id);
 
@@ -415,16 +416,18 @@ function cell(row, col, fallback) {
 function parsePitchingCsv(text) {
   const lines = text.trim().split('\n');
   if (lines.length < 2) return [];
-  const h = parseCsvLine(lines[0]).map(s => s.toLowerCase().replace(/[^a-z]/g,''));
-  const cNum = colIdx(h,'number','num','jersey','no');
-  const cIP  = colIdx(h,'ip','innings');
-  const cPit = colIdx(h,'pitches','pitch');
-  const cStr = colIdx(h,'strikes','strike');
-  const cBB  = colIdx(h,'bb','walks','walk');
-  const cK   = colIdx(h,'k','strikeout','so');
+  const h    = parseCsvLine(lines[0]).map(s => s.toLowerCase().replace(/[^a-z]/g,''));
+  const cGame = colIdx(h,'game','gm','g');
+  const cNum  = colIdx(h,'number','num','jersey','no');
+  const cIP   = colIdx(h,'ip','innings');
+  const cPit  = colIdx(h,'pitches','pitch');
+  const cStr  = colIdx(h,'strikes','strike');
+  const cBB   = colIdx(h,'bb','walks','walk');
+  const cK    = colIdx(h,'k','strikeout','so');
   return lines.slice(1).map(l => {
     const r = parseCsvLine(l);
     if (r.every(c => c === '')) return null;
+    const game    = cGame !== -1 ? (r[cGame] || '').trim() : '';
     const num     = cell(r,cNum,0) || '?';
     const ip      = parseFloat(cell(r,cIP,1))  || 0;
     const pitches = parseInt(cell(r,cPit,2))   || 0;
@@ -432,17 +435,18 @@ function parsePitchingCsv(text) {
     const bb      = parseInt(cell(r,cBB,4))    || 0;
     const k       = parseInt(cell(r,cK,5))     || 0;
     if (ip === 0 && pitches === 0 && k === 0) return null;
-    return { num, ip, pitches, strikes, bb, k,
+    return { game, num, ip, pitches, strikes, bb, k,
       strikePct: pitches > 0 ? strikes/pitches*100 : 0,
       bbk: k > 0 ? bb/k : null };
   }).filter(Boolean);
 }
 
-// Batting: Game | AB | R | H | RBI | BB | SO | Opponent | Common
+// Batting: Game | AB | R | H | RBI | BB | SO
+// opponent and common come from gameIndex (Games tab)
 function parseBattingCsv(text) {
   const lines = text.trim().split('\n');
   if (lines.length < 2) return [];
-  const h = parseCsvLine(lines[0]).map(s => s.toLowerCase().replace(/[^a-z]/g,''));
+  const h     = parseCsvLine(lines[0]).map(s => s.toLowerCase().replace(/[^a-z]/g,''));
   const cGame = colIdx(h,'game','gm','g');
   const cAB   = colIdx(h,'ab','atbat');
   const cR    = colIdx(h,'r','runs','run');
@@ -450,27 +454,47 @@ function parseBattingCsv(text) {
   const cRBI  = colIdx(h,'rbi');
   const cBB   = colIdx(h,'bb','walks','walk');
   const cSO   = colIdx(h,'so','strikeout','k');
-  const cOpp  = colIdx(h,'opponent','opp','opponent');
-  const cCom  = colIdx(h,'common','co','flag');
 
   return lines.slice(1).map((l, i) => {
-    const r = parseCsvLine(l);
+    const r    = parseCsvLine(l);
     if (r.every(c => c === '')) return null;
-    const game     = cell(r,cGame,0) || String(i+1);
+    const game     = (cell(r,cGame,0) || String(i+1)).trim();
     const ab       = parseInt(cell(r,cAB,1))  || 0;
     const run      = parseInt(cell(r,cR,2))   || 0;
     const hits     = parseInt(cell(r,cH,3))   || 0;
     const rbi      = parseInt(cell(r,cRBI,4)) || 0;
     const bb       = parseInt(cell(r,cBB,5))  || 0;
     const so       = parseInt(cell(r,cSO,6))  || 0;
-    const opponent = cOpp !== -1 ? (r[cOpp] || '').trim() : '';
-    const common   = cCom !== -1 ? (r[cCom] || '0').trim() === '1' : false;
+    const gi       = gameIndex[game] || {};
+    const opponent = gi.opponent || '';
+    const common   = gi.common   || false;
     if (ab === 0) return null;
     return { game, ab, run, h: hits, rbi, bb, so, opponent, common,
       avg:  ab > 0 ? hits/ab : 0,
       obp:  (ab+bb) > 0 ? (hits+bb)/(ab+bb) : 0,
       sobb: bb > 0 ? so/bb : null };
   }).filter(Boolean);
+}
+
+// Games: Game | Opponent | Common — master lookup for both pitching and batting
+function parseGamesCsv(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return {};
+  const h     = parseCsvLine(lines[0]).map(s => s.toLowerCase().replace(/[^a-z]/g,''));
+  const cGame = colIdx(h,'game','gm','g');
+  const cOpp  = colIdx(h,'opponent','opp');
+  const cCom  = colIdx(h,'common','co','flag');
+  const index = {};
+  lines.slice(1).forEach((l, i) => {
+    const r    = parseCsvLine(l);
+    if (r.every(c => c === '')) return;
+    const game = (cell(r,cGame,0) || String(i+1)).trim();
+    index[game] = {
+      opponent: cOpp !== -1 ? (r[cOpp] || '').trim() : '',
+      common:   cCom !== -1 ? (r[cCom] || '0').trim() === '1' : false,
+    };
+  });
+  return index;
 }
 
 // ── Aggregates ──
@@ -504,8 +528,17 @@ async function selectTeam(team) {
   currentTeam = team;
   setStatus('loading', `Loading ${team}…`);
 
+  const gamesTab = `${team} - Games`;
   const pitchTab = `${team} - Pitching`;
   const batTab   = `${team} - Batting`;
+
+  // Load Games tab first — builds opponent/common index for pitching & batting
+  gameIndex = {};
+  try {
+    gameIndex = parseGamesCsv(await fetchCsv(gamesTab));
+  } catch(e) {
+    // Games tab optional for backwards compat
+  }
 
   pitchers = [];
   let pitchError = null;
@@ -745,19 +778,11 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       </div>
     </div>
 
-    <div class="report-dual-strip">
-      <div class="report-strip pitching-strip">
-        <div class="strip-eyebrow">⚾ Pitching</div>
-        <div class="rstat"><span class="rstat-val">${pAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
-        <div class="rstat"><span class="rstat-val">${pAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
-        <div class="rstat"><span class="rstat-val">${pAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
-      </div>
-      <div class="report-strip batting-strip">
-        <div class="strip-eyebrow">📊 Season Batting${tot ? ' ('+tot.count+'g)' : ''}</div>
-        <div class="rstat"><span class="rstat-val">${batAVG}</span><span class="rstat-lbl">AVG</span></div>
-        <div class="rstat"><span class="rstat-val">${batOBP}</span><span class="rstat-lbl">OBP</span></div>
-        <div class="rstat"><span class="rstat-val">${batSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
-      </div>
+    <div class="report-strip batting-strip">
+      <div class="strip-eyebrow">📊 Season Batting${tot ? ' ('+tot.count+'g)' : ''}</div>
+      <div class="rstat"><span class="rstat-val">${batAVG}</span><span class="rstat-lbl">AVG</span></div>
+      <div class="rstat"><span class="rstat-val">${batOBP}</span><span class="rstat-lbl">OBP</span></div>
+      <div class="rstat"><span class="rstat-val">${batSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
     </div>
 
     ${coTot && coTot.count > 0 ? `
@@ -767,6 +792,13 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="rstat"><span class="rstat-val">${coOBP}</span><span class="rstat-lbl">OBP</span></div>
       <div class="rstat"><span class="rstat-val">${coSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
     </div>` : ''}
+
+    <div class="report-strip pitching-strip">
+      <div class="strip-eyebrow">⚾ Pitching</div>
+      <div class="rstat"><span class="rstat-val">${pAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
+      <div class="rstat"><span class="rstat-val">${pAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
+      <div class="rstat"><span class="rstat-val">${pAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
+    </div>
 
     <div class="report-section">
       <div class="report-section-heading pitching">⚾ Pitching Staff</div>
