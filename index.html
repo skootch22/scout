@@ -866,8 +866,8 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
     <div class="report-section">
       <div class="report-section-heading findings">Key Findings</div>
       <div class="findings-grid">
-        ${strengths.map(s  => `<div class="finding strength"><div class="finding-type">✦ Strength</div><p>${s}</p></div>`).join('')}
-        ${weaknesses.map(w => `<div class="finding weakness"><div class="finding-type">▲ Concern</div><p>${w}</p></div>`).join('')}
+        ${strengths.map(s  => `<div class="finding strength"><div class="finding-type">✦ Strength &nbsp;·&nbsp; ${s.cat}</div><p>${s.text}</p></div>`).join('')}
+        ${weaknesses.map(w => `<div class="finding weakness"><div class="finding-type">▲ Concern &nbsp;·&nbsp; ${w.cat}</div><p>${w.text}</p></div>`).join('')}
       </div>
     </div>
 
@@ -879,19 +879,19 @@ function getStrengths(pStats, pAgg, tot, coTot, coName) {
   const out = [];
   if (pStats.length) {
     const ace = pStats.reduce((a,b) => b.kper9>a.kper9?b:a, pStats[0]);
-    if (ace) out.push(`#${ace.num} leads the staff at ${ace.kper9.toFixed(2)} K/9 — a premier swing-and-miss arm.`);
+    if (ace) out.push({ cat:'Pitching', text:`#${ace.num} leads the staff at ${ace.kper9.toFixed(2)} K/9 — a premier swing-and-miss arm.` });
     if (parseFloat(pAgg.teamStrikePct) >= 62)
-      out.push(`Staff strike rate of ${pAgg.teamStrikePct}% reflects consistent ability to work ahead in counts.`);
+      out.push({ cat:'Pitching', text:`Staff strike rate of ${pAgg.teamStrikePct}% reflects consistent ability to work ahead in counts.` });
   }
   if (tot) {
-    if (tot.avg >= .270) out.push(`Season AVG of ${fmt(tot.avg)} signals a dangerous, contact-oriented lineup.`);
-    if (tot.obp >= .340) out.push(`Season OBP of ${fmt(tot.obp)} demonstrates strong plate discipline.`);
+    if (tot.avg >= .270) out.push({ cat:'Batting', text:`Season AVG of ${fmt(tot.avg)} signals a dangerous, contact-oriented lineup.` });
+    if (tot.obp >= .340) out.push({ cat:'Batting', text:`Season OBP of ${fmt(tot.obp)} demonstrates strong plate discipline.` });
   }
   if (coTot && coTot.count > 0 && tot) {
     if (coTot.avg > tot.avg + .015)
-      out.push(`Team hits notably better vs. ${coName || 'the common opponent'} — AVG ${fmt(coTot.avg)} vs. season ${fmt(tot.avg)}.`);
+      out.push({ cat:'Batting', text:`Team hits notably better vs. ${coName || 'the common opponent'} — AVG ${fmt(coTot.avg)} vs. season ${fmt(tot.avg)}.` });
   }
-  return out.slice(0,3);
+  return out.slice(0,4);
 }
 
 function getWeaknesses(pStats, pAgg, tot, coTot, coName) {
@@ -899,21 +899,21 @@ function getWeaknesses(pStats, pAgg, tot, coTot, coName) {
   if (pStats.length) {
     const wildest = pStats.reduce((a,b) => b.bbper9>a.bbper9?b:a, pStats[0]);
     if (wildest && wildest.bbper9 > 4)
-      out.push(`#${wildest.num} is the control liability at ${wildest.bbper9.toFixed(2)} BB/9 — patient approaches yield free passes.`);
+      out.push({ cat:'Pitching', text:`#${wildest.num} is the control liability at ${wildest.bbper9.toFixed(2)} BB/9 — patient approaches yield free passes.` });
     if (parseFloat(pAgg.teamStrikePct) < 60)
-      out.push(`Staff strike rate of ${pAgg.teamStrikePct}% is below norms — work counts to inflate pitch totals.`);
+      out.push({ cat:'Pitching', text:`Staff strike rate of ${pAgg.teamStrikePct}% is below norms — work counts to inflate pitch totals.` });
   }
   if (tot) {
     if (tot.sobb !== null && tot.sobb > 2.5)
-      out.push(`SO/BB of ${tot.sobb.toFixed(2)} exposes swing-heavy tendencies — challenge this lineup with strikes.`);
+      out.push({ cat:'Batting', text:`SO/BB of ${tot.sobb.toFixed(2)} exposes swing-heavy tendencies — challenge this lineup with strikes.` });
     if (tot.obp < .310)
-      out.push(`Season OBP of ${fmt(tot.obp)} reveals limited plate discipline — pitchers can attack confidently.`);
+      out.push({ cat:'Batting', text:`Season OBP of ${fmt(tot.obp)} reveals limited plate discipline — pitchers can attack confidently.` });
   }
   if (coTot && coTot.count > 0 && tot) {
     if (coTot.avg < tot.avg - .015)
-      out.push(`Team struggles vs. ${coName || 'the common opponent'} — AVG drops to ${fmt(coTot.avg)} vs. season ${fmt(tot.avg)}.`);
+      out.push({ cat:'Batting', text:`Team struggles vs. ${coName || 'the common opponent'} — AVG drops to ${fmt(coTot.avg)} vs. season ${fmt(tot.avg)}.` });
   }
-  return out.slice(0,3);
+  return out.slice(0,4);
 }
 
 // Enter key on either input triggers load
