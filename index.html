@@ -850,22 +850,18 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="rstat"><span class="rstat-val">${pAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
     </div>
 
-    <div class="report-section">
-      <div class="report-section-heading pitching">⚾ Pitching Staff — Season</div>
-      ${pitcherRows}
-    </div>
-
     ${coPStats && coPStats.length > 0 ? `
     <div class="report-strip common-strip">
       <div class="strip-eyebrow">🎯 Common Opponent Pitching${coName ? ' — '+coName : ''}</div>
       <div class="rstat"><span class="rstat-val">${coPAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
       <div class="rstat"><span class="rstat-val">${coPAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
       <div class="rstat"><span class="rstat-val">${coPAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
-    </div>
-    <div class="report-section">
-      <div class="report-section-heading common">🎯 Pitching vs. Common Opponent</div>
-      ${coPitcherRows}
     </div>` : ''}
+
+    <div class="report-section">
+      <div class="report-section-heading pitching">⚾ Pitching Staff</div>
+      ${pitcherRows}
+    </div>
 
     <div class="report-section">
       <div class="report-section-heading findings">Key Findings</div>
