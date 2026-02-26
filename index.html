@@ -612,19 +612,20 @@ function renderPitchingTable() {
 // batting data is used directly by generateReport via the games[] array
 
 function calcRecord(index) {
-  let w = 0, l = 0, rs = 0, ra = 0;
+  let w = 0, l = 0, t = 0, rs = 0, ra = 0;
   Object.values(index).forEach(g => {
     if (g.score !== null && g.oppScore !== null) {
       rs += g.score;
       ra += g.oppScore;
       if (g.score > g.oppScore) w++;
-      else l++;
+      else if (g.score < g.oppScore) l++;
+      else t++;
     }
   });
-  const gp = w + l;
+  const gp = w + l + t;
   if (gp === 0) return null;
   const diff = rs - ra;
-  return { w, l, rs, ra, diff, gp };
+  return { w, l, t, rs, ra, diff, gp };
 }
 
 // ── Charts ──
@@ -848,7 +849,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div>
         <div class="masthead-eyebrow">Full Team Scouting Report</div>
         <div class="masthead-team">${teamName}</div>
-        ${record ? `<div class="masthead-record">${record.w}-${record.l} &nbsp;·&nbsp; RS ${record.rs} &nbsp;·&nbsp; RA ${record.ra} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff</div>` : ''}
+        ${record ? `<div class="masthead-record">${record.w}-${record.l}${record.t > 0 ? '-'+record.t : ''} &nbsp;·&nbsp; RS ${record.rs} &nbsp;·&nbsp; RA ${record.ra} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff</div>` : ''}
       </div>
     </div>
 
