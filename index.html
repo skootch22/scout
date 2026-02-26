@@ -185,6 +185,7 @@
   .report-masthead { background: var(--dark); color: var(--cream); padding: 20px 16px; }
   .masthead-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .2em; opacity: .4; text-transform: uppercase; margin-bottom: 4px; }
   .masthead-team { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; letter-spacing: .02em; line-height: 1; margin-bottom: 8px; }
+  .masthead-record { font-family: 'IBM Plex Mono', monospace; font-size: .75rem; font-weight: 700; letter-spacing: .06em; color: var(--cream); margin: 6px 0 4px; }
   .masthead-meta { font-family: 'IBM Plex Mono', monospace; font-size: .62rem; opacity: .7; letter-spacing: .08em; line-height: 1.7; }
 
   .report-strip { display: grid; grid-template-columns: repeat(3,1fr); }
@@ -847,7 +848,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div>
         <div class="masthead-eyebrow">Full Team Scouting Report</div>
         <div class="masthead-team">${teamName}</div>
-        <div class="masthead-meta">${record ? `${record.w}-${record.l} &nbsp;·&nbsp; RS ${record.rs} &nbsp;·&nbsp; RA ${record.ra} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff &nbsp;·&nbsp; ` : ''}${now}</div>
+        ${record ? `<div class="masthead-record">${record.w}-${record.l} &nbsp;·&nbsp; RS ${record.rs} &nbsp;·&nbsp; RA ${record.ra} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff</div>` : ''}
       </div>
     </div>
 
@@ -894,6 +895,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       </div>
     </div>
 
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;opacity:.4;letter-spacing:.08em;padding:12px 16px;text-align:right;">${now}</div>
 
   `;
 }
