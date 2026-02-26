@@ -691,7 +691,10 @@ function computePitchingStats() {
     if (kbb >= 3) s+=2; else if (kbb >= 2) s+=1;
     if (strikePct >= 65) s+=1;
     const grade = s>=7?'A':s>=5?'B':s>=3?'C':s>=1?'D':'F';
-    return { ...p, ipDec, ipDisplay, strikePct, bbk, kper9, bbper9, kbb, grade };
+    const pitchesPerInning = ipDec > 0 ? p.pitches / ipDec : 0;
+    const ipPerOuting      = p.outings > 0 ? ipDec / p.outings : 0;
+    const ipPerOutingDisp  = decimalToIp(ipPerOuting);
+    return { ...p, ipDec, ipDisplay, strikePct, bbk, kper9, bbper9, kbb, grade, pitchesPerInning, ipPerOuting, ipPerOutingDisp };
   });
 }
 
@@ -723,7 +726,10 @@ function computePitchingStatsForGames(gameNumSet) {
     if (kbb >= 3) s+=2; else if (kbb >= 2) s+=1;
     if (strikePct >= 65) s+=1;
     const grade = s>=7?'A':s>=5?'B':s>=3?'C':s>=1?'D':'F';
-    return { ...p, ipDec, ipDisplay, strikePct, bbk, kper9, bbper9, kbb, grade };
+    const pitchesPerInning = ipDec > 0 ? p.pitches / ipDec : 0;
+    const ipPerOuting      = p.outings > 0 ? ipDec / p.outings : 0;
+    const ipPerOutingDisp  = decimalToIp(ipPerOuting);
+    return { ...p, ipDec, ipDisplay, strikePct, bbk, kper9, bbper9, kbb, grade, pitchesPerInning, ipPerOuting, ipPerOutingDisp };
   });
 }
 
@@ -736,9 +742,10 @@ function pitchingAgg(stats) {
   const ipDisplay = decimalToIp(ip);
   return {
     totalIP: ipDisplay, totalK: k, totalBB: bb,
-    teamKper9:     ip>0 ? (k/ip*9).toFixed(2)    : '—',
-    teamStrikePct: pi>0 ? (st/pi*100).toFixed(1) : '—',
-    teamBBK:       k>0  ? (bb/k).toFixed(2)       : '—',
+    teamKper9:          ip>0 ? (k/ip*9).toFixed(2)    : '—',
+    teamStrikePct:      pi>0 ? (st/pi*100).toFixed(1) : '—',
+    teamBBK:            k>0  ? (bb/k).toFixed(2)       : '—',
+    teamPitchPerInning: ip>0 ? (pi/ip).toFixed(1)      : '—',
   };
 }
 
@@ -865,7 +872,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div>
         <div class="masthead-eyebrow">Full Team Scouting Report</div>
         <div class="masthead-team">${teamName}</div>
-        ${record ? `<div class="masthead-record">${record.w}-${record.l}${record.t > 0 ? '-'+record.t : ''} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff</div>` : ''}
+        ${record ? `<div class="masthead-record">${record.w}-${record.l}${record.t > 0 ? '-'+record.t : ''} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff &nbsp;·&nbsp; ${(record.diff/record.gp)>=0?'+':''}${(record.diff/record.gp).toFixed(1)}/G</div>` : ''}
         ${coRecord ? `<div class="masthead-co-record">vs. ${coName || 'Common Opp'}: ${coRecord.w}-${coRecord.l}${coRecord.t > 0 ? '-'+coRecord.t : ''} &nbsp;·&nbsp; ${coRecord.diff >= 0 ? '+' : ''}${coRecord.diff} Run Diff</div>` : ''}
       </div>
     </div>
@@ -885,11 +892,12 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="rstat"><span class="rstat-val">${coSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
     </div>` : ''}
 
-    <div class="report-strip pitching-strip">
-      <div class="strip-eyebrow">⚾ Pitching</div>
+    <div class="report-strip pitching-strip" style="grid-template-columns:repeat(4,1fr)">
+      <div class="strip-eyebrow" style="grid-column:1/-1">⚾ Pitching</div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
+      <div class="rstat"><span class="rstat-val">${pAgg.teamPitchPerInning}</span><span class="rstat-lbl">P / IP</span></div>
     </div>
 
     ${coPStats && coPStats.length > 0 ? `
