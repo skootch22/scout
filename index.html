@@ -372,12 +372,24 @@ function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 // ── Fetch Teams tab and populate dropdown (runs on page load) ──
 async function fetchTeamList() {
   try {
-    const text = await fetchCsv('Teams');
-    const lines = text.trim().split('\n').slice(1);
-    const teams = lines
-      .map(l => parseCsvLine(l)[0].trim())
-      .filter(Boolean);
-    if (!teams.length) throw new Error('No teams found.');
+    const text  = await fetchCsv('Teams');
+    const lines = text.trim().split('\n');
+    const header = parseCsvLine(lines[0]).map(s => s.toLowerCase().replace(/[^a-z]/g,''));
+    const cTeam   = colIdx(header,'team','name');
+    const cActive = colIdx(header,'active');
+    const teams = lines.slice(1)
+      .map(l => parseCsvLine(l))
+      .filter(r => {
+        if (r.every(c => c === '')) return false;
+        const name = (r[cTeam !== -1 ? cTeam : 0] || '').trim();
+        if (!name) return false;
+        // If no Active column exists, include all teams
+        if (cActive === -1) return true;
+        const active = (r[cActive] || '').trim().toLowerCase();
+        return active === '1' || active === 'yes' || active === 'true' || active === 'y';
+      })
+      .map(r => (r[cTeam !== -1 ? cTeam : 0] || '').trim());
+    if (!teams.length) throw new Error('No active teams found.');
     const sel = $('teamSelect');
     sel.innerHTML = '<option value="">— select a team —</option>' +
       teams.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -853,8 +865,8 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div>
         <div class="masthead-eyebrow">Full Team Scouting Report</div>
         <div class="masthead-team">${teamName}</div>
-        ${record ? `<div class="masthead-record">${record.w}-${record.l}${record.t > 0 ? '-'+record.t : ''} &nbsp;·&nbsp; RS ${record.rs} &nbsp;·&nbsp; RA ${record.ra} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff</div>` : ''}
-        ${coRecord ? `<div class="masthead-co-record">vs. ${coName || 'Common Opp'}: ${coRecord.w}-${coRecord.l}${coRecord.t > 0 ? '-'+coRecord.t : ''} &nbsp;·&nbsp; RS ${coRecord.rs} &nbsp;·&nbsp; RA ${coRecord.ra} &nbsp;·&nbsp; ${coRecord.diff >= 0 ? '+' : ''}${coRecord.diff} Run Diff</div>` : ''}
+        ${record ? `<div class="masthead-record">${record.w}-${record.l}${record.t > 0 ? '-'+record.t : ''} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff</div>` : ''}
+        ${coRecord ? `<div class="masthead-co-record">vs. ${coName || 'Common Opp'}: ${coRecord.w}-${coRecord.l}${coRecord.t > 0 ? '-'+coRecord.t : ''} &nbsp;·&nbsp; ${coRecord.diff >= 0 ? '+' : ''}${coRecord.diff} Run Diff</div>` : ''}
       </div>
     </div>
 
