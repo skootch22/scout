@@ -892,12 +892,11 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="rstat"><span class="rstat-val">${coSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
     </div>` : ''}
 
-    <div class="report-strip pitching-strip" style="grid-template-columns:repeat(4,1fr)">
-      <div class="strip-eyebrow" style="grid-column:1/-1">⚾ Pitching</div>
+    <div class="report-strip pitching-strip">
+      <div class="strip-eyebrow">⚾ Pitching</div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
-      <div class="rstat"><span class="rstat-val">${pAgg.teamPitchPerInning}</span><span class="rstat-lbl">P / IP</span></div>
     </div>
 
     ${coPStats && coPStats.length > 0 ? `
