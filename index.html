@@ -185,7 +185,9 @@
   .report-masthead { background: var(--dark); color: var(--cream); padding: 20px 16px; }
   .masthead-eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; letter-spacing: .2em; opacity: .4; text-transform: uppercase; margin-bottom: 4px; }
   .masthead-team { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; letter-spacing: .02em; line-height: 1; margin-bottom: 8px; }
-  .masthead-record { font-family: 'IBM Plex Mono', monospace; font-size: .75rem; font-weight: 700; letter-spacing: .06em; color: var(--cream); margin: 6px 0 4px; }
+  .masthead-record { font-family: 'IBM Plex Mono', monospace; font-size: .75rem; font-weight: 700; letter-spacing: .06em; color: var(--cream); margin: 6px 0 2px; }
+  .masthead-co-record { font-family: 'IBM Plex Mono', monospace; font-size: .62rem; font-weight: 600; letter-spacing: .06em; color: var(--cream); opacity: .7; margin-bottom: 4px; }
+  .masthead-co-record { font-family: 'IBM Plex Mono', monospace; font-size: .62rem; font-weight: 600; letter-spacing: .06em; color: #a8d4ee; margin-bottom: 4px; }
   .masthead-meta { font-family: 'IBM Plex Mono', monospace; font-size: .62rem; opacity: .7; letter-spacing: .08em; line-height: 1.7; }
 
   .report-strip { display: grid; grid-template-columns: repeat(3,1fr); }
@@ -737,6 +739,8 @@ async function generateReport() {
 
 
   const record      = calcRecord(gameIndex);
+  const coGameIndex = Object.fromEntries(Object.entries(gameIndex).filter(([,v]) => v.common));
+  const coRecord    = calcRecord(coGameIndex);
   const pStats      = computePitchingStats();
   const pAgg        = pitchingAgg(pStats);
   const tot         = games.length ? calcTotals(games) : null;
@@ -751,13 +755,13 @@ async function generateReport() {
 
   const reportEl = $('report');
   reportEl.style.display = 'block';
-  reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg, record);
+  reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg, record, coRecord);
   $('statusBar').className = '';
   $('statusBar').innerHTML = '';
 }
 
 // ── Build Report HTML ──
-function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg, record) {
+function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg, record, coRecord) {
   const now = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 
   const pitcherRows = pStats.map(p => `
@@ -850,6 +854,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
         <div class="masthead-eyebrow">Full Team Scouting Report</div>
         <div class="masthead-team">${teamName}</div>
         ${record ? `<div class="masthead-record">${record.w}-${record.l}${record.t > 0 ? '-'+record.t : ''} &nbsp;·&nbsp; RS ${record.rs} &nbsp;·&nbsp; RA ${record.ra} &nbsp;·&nbsp; ${record.diff >= 0 ? '+' : ''}${record.diff} Run Diff</div>` : ''}
+        ${coRecord ? `<div class="masthead-co-record">vs. ${coName || 'Common Opp'}: ${coRecord.w}-${coRecord.l}${coRecord.t > 0 ? '-'+coRecord.t : ''} &nbsp;·&nbsp; RS ${coRecord.rs} &nbsp;·&nbsp; RA ${coRecord.ra} &nbsp;·&nbsp; ${coRecord.diff >= 0 ? '+' : ''}${coRecord.diff} Run Diff</div>` : ''}
       </div>
     </div>
 
