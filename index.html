@@ -369,6 +369,18 @@ function fmt(n, d = 3) { return n.toFixed(d).replace(/^0\./, '.'); }
 
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
+function calcStolenBases(index) {
+  let sb = 0, cs = 0, hasData = false;
+  Object.values(index).forEach(g => {
+    if (g.sb !== null) { sb += g.sb; hasData = true; }
+    if (g.cs !== null) { cs += g.cs; hasData = true; }
+  });
+  if (!hasData) return null;
+  const attempts = sb + cs;
+  const csPct = attempts > 0 ? (cs / attempts * 100) : null;
+  return { sb, cs, attempts, csPct };
+}
+
 // ── Fetch Teams tab and populate dropdown (runs on page load) ──
 async function fetchTeamList() {
   try {
@@ -501,18 +513,24 @@ function parseGamesCsv(text) {
   const cCom   = colIdx(h,'common','co','flag');
   const cScore = colIdx(h,'score','rs','runsscored','ourscore');
   const cOppSc = colIdx(h,'oppscore','ra','runsallowed','opponentscore','oppsc');
+  const cSB    = colIdx(h,'sb','stolenbase','stolenbasesallowed','sba');
+  const cCS    = colIdx(h,'cs','caughtstealing');
   const index  = {};
   lines.slice(1).forEach((l, i) => {
     const r    = parseCsvLine(l);
     if (r.every(c => c === '')) return;
     const game    = (cell(r,cGame,0) || String(i+1)).trim();
-    const score   = cScore  !== -1 ? parseInt(r[cScore]  || '') : NaN;
-    const oppScore= cOppSc  !== -1 ? parseInt(r[cOppSc]  || '') : NaN;
+    const score   = cScore !== -1 ? parseInt(r[cScore]  || '') : NaN;
+    const oppScore= cOppSc !== -1 ? parseInt(r[cOppSc]  || '') : NaN;
+    const sb      = cSB    !== -1 ? parseInt(r[cSB]     || '') : NaN;
+    const cs      = cCS    !== -1 ? parseInt(r[cCS]     || '') : NaN;
     index[game] = {
       opponent: cOpp !== -1 ? (r[cOpp] || '').trim() : '',
       common:   cCom !== -1 ? (r[cCom] || '0').trim() === '1' : false,
       score:    isNaN(score)    ? null : score,
       oppScore: isNaN(oppScore) ? null : oppScore,
+      sb:       isNaN(sb)       ? null : sb,
+      cs:       isNaN(cs)       ? null : cs,
     };
   });
   return index;
@@ -760,6 +778,8 @@ async function generateReport() {
   const record      = calcRecord(gameIndex);
   const coGameIndex = Object.fromEntries(Object.entries(gameIndex).filter(([,v]) => v.common));
   const coRecord    = calcRecord(coGameIndex);
+  const sbStats     = calcStolenBases(gameIndex);
+  const coSbStats   = calcStolenBases(coGameIndex);
   const pStats      = computePitchingStats();
   const pAgg        = pitchingAgg(pStats);
   const tot         = games.length ? calcTotals(games) : null;
@@ -774,13 +794,13 @@ async function generateReport() {
 
   const reportEl = $('report');
   reportEl.style.display = 'block';
-  reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg, record, coRecord);
+  reportEl.innerHTML = buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg, record, coRecord, sbStats, coSbStats);
   $('statusBar').className = '';
   $('statusBar').innerHTML = '';
 }
 
 // ── Build Report HTML ──
-function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg, record, coRecord) {
+function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot, coName, coPStats, coPAgg, record, coRecord, sbStats, coSbStats) {
   const now = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 
   const pitcherRows = pStats.map(p => `
@@ -892,19 +912,21 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="rstat"><span class="rstat-val">${coSOBB}</span><span class="rstat-lbl">SO/BB</span></div>
     </div>` : ''}
 
-    <div class="report-strip pitching-strip">
-      <div class="strip-eyebrow">⚾ Pitching</div>
+    <div class="report-strip pitching-strip" style="grid-template-columns:repeat(4,1fr)">
+      <div class="strip-eyebrow" style="grid-column:1/-1">⚾ Pitching</div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
+      <div class="rstat"><span class="rstat-val">${sbStats && sbStats.csPct !== null ? sbStats.csPct.toFixed(0)+'%' : '—'}</span><span class="rstat-lbl">CS%</span></div>
     </div>
 
     ${coPStats && coPStats.length > 0 ? `
-    <div class="report-strip common-strip">
-      <div class="strip-eyebrow">🎯 Common Opponent Pitching${coName ? ' — '+coName : ''}</div>
+    <div class="report-strip common-strip" style="grid-template-columns:repeat(4,1fr)">
+      <div class="strip-eyebrow" style="grid-column:1/-1">🎯 Common Opponent Pitching${coName ? ' — '+coName : ''}</div>
       <div class="rstat"><span class="rstat-val">${coPAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
       <div class="rstat"><span class="rstat-val">${coPAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
       <div class="rstat"><span class="rstat-val">${coPAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
+      <div class="rstat"><span class="rstat-val">${coSbStats && coSbStats.csPct !== null ? coSbStats.csPct.toFixed(0)+'%' : '—'}</span><span class="rstat-lbl">CS%</span></div>
     </div>` : ''}
 
     <div class="report-section">
