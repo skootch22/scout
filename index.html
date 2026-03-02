@@ -918,7 +918,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="rstat"><span class="rstat-val">${pAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
       <div class="rstat"><span class="rstat-val">${pAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
-      <div class="rstat"><span class="rstat-val">${sbStats && sbStats.csPct !== null ? sbStats.csPct.toFixed(0)+'%' : '—'}</span><span class="rstat-lbl">CS%</span></div>
+      <div class="rstat"><span class="rstat-val">${sbStats && sbStats.csPct !== null ? (sbStats.csPct >= 15 ? '🛑 ' : '') + sbStats.csPct.toFixed(0)+'%' : '—'}</span><span class="rstat-lbl">CS%</span></div>
     </div>
 
     ${coPStats && coPStats.length > 0 ? `
@@ -927,7 +927,7 @@ function buildReportHTML(teamName, season, leagueName, pStats, pAgg, tot, coTot,
       <div class="rstat"><span class="rstat-val">${coPAgg.teamStrikePct}%</span><span class="rstat-lbl">Strike Rate</span></div>
       <div class="rstat"><span class="rstat-val">${coPAgg.teamBBK}</span><span class="rstat-lbl">BB / K</span></div>
       <div class="rstat"><span class="rstat-val">${coPAgg.teamKper9}</span><span class="rstat-lbl">K / 9</span></div>
-      <div class="rstat"><span class="rstat-val">${coSbStats && coSbStats.csPct !== null ? coSbStats.csPct.toFixed(0)+'%' : '—'}</span><span class="rstat-lbl">CS%</span></div>
+      <div class="rstat"><span class="rstat-val">${coSbStats && coSbStats.csPct !== null ? (coSbStats.csPct >= 15 ? '🛑 ' : '') + coSbStats.csPct.toFixed(0)+'%' : '—'}</span><span class="rstat-lbl">CS%</span></div>
     </div>` : ''}
 
     <div class="report-section">
