@@ -95,19 +95,23 @@ The app fetches data via Google's CSV export endpoint, which requires the sheet 
 
 > Note: "Published to web" is separate from "Anyone with the link can view." You need both.
 
-### 4. Hardcode your sheet ID
+### 4. Set your sheet ID
 
-Open `baseball-scout.html` in a text editor and find this line near the top of the `<script>` block:
+Open `config.js` and replace the sheet ID with your own:
 
 ```javascript
-let sheetId = 'YOUR_SHEET_ID_HERE'; // hardcoded
+const SCOUT_CONFIG = {
+  sheetId: 'YOUR_SHEET_ID_HERE',
+};
 ```
 
-Replace `YOUR_SHEET_ID_HERE` with the ID from your Google Sheet URL:
+Find your sheet ID in the Google Sheets URL:
 
 ```
 https://docs.google.com/spreadsheets/d/SHEET_ID_IS_HERE/edit
 ```
+
+Both `config.js` and `baseball-scout.html` must be in the same folder when deployed.
 
 ---
 

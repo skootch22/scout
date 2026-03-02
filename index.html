@@ -340,13 +340,14 @@
 
 </div>
 
+<script src="config.js"></script>
 <script>
 'use strict';
 
 let pitchers    = [];
 let games       = [];
 let currentTeam = '';
-let sheetId     = '11RIKkgh2hpozY3boJ6iqK_XA9-iurofS7Z5ZyECCa8A'; // hardcoded
+let sheetId     = (typeof SCOUT_CONFIG !== 'undefined' ? SCOUT_CONFIG.sheetId : ''); // set in config.js
 let gameIndex   = {}; // game# -> { opponent, common } from Games tab
 
 const $ = id => document.getElementById(id);
