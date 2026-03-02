@@ -50,7 +50,7 @@ Lists all teams. Only teams marked Active will appear in the dropdown.
 
 Master game log. Drives opponent names, common opponent flags, team record, and stolen base tracking.
 
-| Game | Opponent | Common | Score | Opp Score | SB | CS |
+| Game | Opponent | Common | Score | Opp Score | Opp SB | Opp CS |
 |---|---|---|---|---|---|---|
 | 1 | Toledo | 0 | 5 | 3 | 2 | 1 |
 | 2 | Lake County | 1 | 2 | 7 | 0 | 0 |
@@ -58,8 +58,8 @@ Master game log. Drives opponent names, common opponent flags, team record, and 
 
 - **Common**: `1` = flag this game as a common opponent game for comparison purposes
 - **Score / Opp Score**: used to calculate W-L-T record and run differential. Leave blank if unknown — those games are excluded from the record.
-- **SB**: stolen bases allowed by the pitching staff that game
-- **CS**: runners caught stealing that game. CS% = CS / (SB + CS). Leave blank if not tracked — the stat will show `—` rather than an incorrect zero.
+- **Opp SB**: stolen bases allowed by the pitching staff that game
+- **Opp CS**: runners caught stealing that game. CS% = Opp CS / (Opp SB + Opp CS). Leave blank if not tracked — the stat will show `—` rather than an incorrect zero.
 
 #### TeamName - Pitching
 
@@ -126,8 +126,8 @@ Column header names are matched loosely — order doesn't matter and capitalizat
 | Common | `Common`, `Co`, `Flag` |
 | Score | `Score`, `RS`, `Runs Scored`, `Our Score` |
 | Opp Score | `Opp Score`, `RA`, `Runs Allowed`, `Opponent Score`, `Opp Sc` |
-| SB | `SB`, `Stolen Base`, `Stolen Bases Allowed`, `SBA` |
-| CS | `CS`, `Caught Stealing` |
+| Opp SB | `Opp SB`, `Opp Steals`, `SB`, `Stolen Base`, `Stolen Bases Allowed`, `SBA` |
+| Opp CS | `Opp CS`, `CS`, `Caught Stealing` |
 | Number | `Number`, `Num`, `Jersey`, `No` |
 | IP | `IP`, `Innings` |
 | Pitches | `Pitches`, `Pitch` |

@@ -514,8 +514,8 @@ function parseGamesCsv(text) {
   const cCom   = colIdx(h,'common','co','flag');
   const cScore = colIdx(h,'score','rs','runsscored','ourscore');
   const cOppSc = colIdx(h,'oppscore','ra','runsallowed','opponentscore','oppsc');
-  const cSB    = colIdx(h,'sb','stolenbase','stolenbasesallowed','sba');
-  const cCS    = colIdx(h,'cs','caughtstealing');
+  const cSB    = colIdx(h,'oppsb','oppsteals','sb','stolenbase','stolenbasesallowed','sba');
+  const cCS    = colIdx(h,'oppcs','cs','caughtstealing');
   const index  = {};
   lines.slice(1).forEach((l, i) => {
     const r    = parseCsvLine(l);
