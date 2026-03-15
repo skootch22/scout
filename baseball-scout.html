@@ -1002,7 +1002,21 @@ function getWeaknesses(pStats, pAgg, tot, coTot, coName) {
 
 // Enter key on either input triggers load
 // Teams load automatically on page load via fetchTeamList() below
-fetchTeamList();
+// If a team name is in the URL hash (e.g. from compare.html), auto-load it
+async function init() {
+  await fetchTeamList();
+  const hash = decodeURIComponent(window.location.hash.slice(1));
+  if (hash) {
+    const sel = $('teamSelect');
+    // Wait for dropdown to populate then select and load
+    const opt = Array.from(sel.options).find(o => o.value === hash);
+    if (opt) {
+      sel.value = hash;
+      selectTeam(hash);
+    }
+  }
+}
+init();
 </script>
 </body>
 </html>
