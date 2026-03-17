@@ -236,13 +236,13 @@
   .report-section-heading.findings { border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.55); }
 
   /* Pitcher row */
-  .pitcher-row { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--chalk); border: 1.5px solid var(--dark); margin-bottom: 8px; }
-  .pr-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.6rem; line-height: 1; min-width: 44px; text-align: center; }
-  .pr-stats { flex: 1; display: grid; grid-template-columns: repeat(3,1fr); gap: 6px 8px; }
-  .prs .v { font-family: 'IBM Plex Mono', monospace; font-size: .82rem; font-weight: 600; display: block; }
-  .prs .l { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--ink); display: block; }
+  .pitcher-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: linear-gradient(90deg, rgba(41,170,223,.08) 0%, var(--bg-card2) 50%); border: 1px solid rgba(41,170,223,.2); border-left: 4px solid rgba(41,170,223,.5); border-radius: 8px; margin-bottom: 10px; }
+  .pr-num { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.8rem; line-height: 1; min-width: 48px; text-align: center; color: var(--accent); letter-spacing: .02em; }
+  .pr-stats { flex: 1; display: grid; grid-template-columns: repeat(3,1fr); gap: 8px 10px; }
+  .prs .v { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; font-weight: 700; display: block; line-height: 1.1; color: var(--cream); }
+  .prs .l { font-family: 'IBM Plex Mono', monospace; font-size: .5rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: rgba(255,255,255,.38); display: block; margin-top: 1px; }
   .prs.hi .v { color: var(--orange); }
-  .pr-grade { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; border: 1.5px solid rgba(0,0,0,.2); }
+  .pr-grade { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,.15); align-self: center; }
   .grade-A { background: #2d5a35; color: white; }
   .grade-B { background: #4a7c59; color: white; }
   .grade-C { background: #c9a800; color: white; }
