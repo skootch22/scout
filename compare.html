@@ -150,50 +150,7 @@
     background-size: 200% 100%; animation: shimmer 1.2s infinite; color: transparent !important; }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-  /* legend */
-  /* ── Tournament Tiles ── */
-  #tournTiles { margin-bottom: 16px; }
-  .tile {
-    background: var(--bg-card);
-    border: 1px solid rgba(255,255,255,.08);
-    border-left: 4px solid rgba(41,170,223,.3);
-    border-radius: 10px;
-    padding: 16px 14px;
-    cursor: pointer;
-    transition: all .15s;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 700;
-    letter-spacing: .04em;
-    color: var(--cream);
-    text-transform: uppercase;
-    line-height: 1.2;
-  }
-  .tile:hover {
-    background: var(--bg-card2);
-    border-left-color: var(--accent);
-    border-color: rgba(41,170,223,.25);
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,.3);
-  }
-  .tile.active {
-    background: linear-gradient(90deg, rgba(41,170,223,.18) 0%, var(--bg-card2) 100%);
-    border-left-color: var(--accent);
-    border-color: rgba(41,170,223,.3);
-    color: white;
-    box-shadow: 0 2px 12px rgba(41,170,223,.15);
-  }
-  .tile-loading {
-    color: rgba(255,255,255,.3);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: .65rem;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    cursor: default;
-    border-left-color: transparent;
-  }
-  .legend { font-family: 'IBM Plex Mono', monospace; font-size: .5rem; opacity: .35;
+  /* legend */  .legend { font-family: 'IBM Plex Mono', monospace; font-size: .5rem; opacity: .35;
     letter-spacing: .08em; margin-top: 0; padding: 8px 12px; text-align: right; color: var(--cream); border-top: 1px solid var(--line); }
   .legend span { display: inline-block; width: 10px; height: 10px;
     background: var(--blue); opacity: .3; margin-right: 4px; vertical-align: middle; }
@@ -219,10 +176,13 @@
 
 <div class="container">
 
-  <div id="tournTiles">
-    <span class="section-label" style="display:block;margin-bottom:12px;">Select Tournament</span>
-    <div id="tilesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;">
-      <div class="tile tile-loading">Loading…</div>
+  <div class="card">
+    <span class="section-label">Select Tournament</span>
+    <div class="field">
+      <label>Tournament</label>
+      <select id="tournSelect">
+        <option value="">— loading tournaments… —</option>
+      </select>
     </div>
   </div>
 
@@ -398,7 +358,7 @@ function aggregateTeam(pitchers, batters, gameData) {
     record: gameData.record, sbStats: gameData.sbStats };
 }
 
-// ── Load tournaments as tiles ──
+// ── Load tournaments into dropdown ──
 async function loadTournaments() {
   try {
     const text  = await fetchCsv('Tournaments');
@@ -411,21 +371,11 @@ async function loadTournaments() {
         .filter(Boolean)
     )];
     if (!tournaments.length) throw new Error('No tournaments found.');
-    const grid = $('tilesGrid');
-    grid.innerHTML = tournaments.map(t =>
-      `<div class="tile" data-tourn="${t}">${t}</div>`
-    ).join('');
-    grid.querySelectorAll('.tile').forEach(tile => {
-      tile.addEventListener('click', () => {
-        grid.querySelectorAll('.tile').forEach(t => t.classList.remove('active'));
-        tile.classList.add('active');
-        loadTournament(tile.dataset.tourn);
-      });
-    });
-    // Auto-select if only one tournament
-    if (tournaments.length === 1) {
-      grid.querySelector('.tile').click();
-    }
+    const sel = $('tournSelect');
+    sel.innerHTML = '<option value="">— select a tournament —</option>' +
+      tournaments.map(t => `<option value="${t}">${t}</option>`).join('');
+    sel.addEventListener('change', () => { if (sel.value) loadTournament(sel.value); });
+    setStatus('success', `${tournaments.length} tournament${tournaments.length !== 1 ? 's' : ''} found.`);
   } catch(e) {
     setStatus('error', `Could not load tournaments: ${e.message}`);
   }
