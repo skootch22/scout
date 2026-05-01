@@ -933,6 +933,19 @@ loadSheet();
 function checkDeepLink() {
   const params = new URLSearchParams(window.location.search);
   const requested = (params.get('tournament') || '').trim().toLowerCase();
+
+  // DEBUG — remove after fixing
+  const debug = `
+    <div style="background:#1a1a2e;border:2px solid #f5a623;padding:1rem;margin:1rem;border-radius:8px;font-family:monospace;font-size:.8rem;color:#e8edf5;">
+      <strong style="color:#f5a623">🔍 Deep Link Debug</strong><br><br>
+      <b>URL param:</b> ${params.get('tournament') || '(none)'}<br>
+      <b>Searching for:</b> "${requested}"<br>
+      <b>Tournaments loaded:</b> ${tournaments.length}<br>
+      <b>Tournament names:</b><br>
+      ${tournaments.map(t => `&nbsp;&nbsp;"${t.name}" → "${t.name.trim().toLowerCase()}"`).join('<br>')}
+    </div>`;
+  document.querySelector('.selector-wrap').insertAdjacentHTML('afterend', debug);
+
   if (!requested) return;
 
   const match = tournaments.findIndex(t => t.name.trim().toLowerCase() === requested);
@@ -941,14 +954,12 @@ function checkDeepLink() {
     return;
   }
 
-  // Pre-select in the dropdown
   const t = tournaments[match];
   const csBtn = document.getElementById('custom-select-btn');
   csBtn.innerHTML = `<span class="cs-name">${escapeHTML(t.name)}</span>${t.location ? `<span class="cs-loc">📍 ${escapeHTML(t.location)}</span>` : ''}`;
   csBtn.classList.remove('placeholder');
   selectedIdx = match;
 
-  // Show the rules
   showRules(t);
 }
 </script>
