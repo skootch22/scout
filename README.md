@@ -1,185 +1,145 @@
-# ⚾ Baseball Scouting Report
+# ⚾ Tournament Rules Viewer
 
-A mobile-first, single-file web application for generating team scouting reports from Google Sheets data. No server, no build tools, no dependencies — just one HTML file deployed to GitHub Pages.
+A mobile-friendly web page for looking up baseball tournament rules. Data is pulled live from a published Google Sheet, so rules can be updated by anyone with sheet access — no code changes needed.
 
 ---
 
-## Features
+## Files
 
-- **Instant reports** — select a team from the dropdown and a full scouting report generates automatically
-- **Google Sheets integration** — data lives in your spreadsheet; the app fetches it directly via CSV export
-- **Pitching analysis** — per-pitcher rollup across all outings with K/9, BB/9, Strike%, BB/K, P/IP, IP/App, and color-coded grade dots
-- **Batting analysis** — team AVG, OBP, and SO/BB for the full season
-- **Stolen base tracking** — SB allowed and CS% tracked at the game level and surfaced in the pitching strip
-- **Common opponent comparison** — flag specific games to compare performance against a shared opponent across pitching and batting
-- **Team record** — W-L-T record, run differential, and run diff per game pulled automatically from scores in your sheet
-- **Key Findings** — auto-generated strengths and concerns labeled by Pitching or Batting
-- **Mobile-first** — designed for sideline use on a phone; fully responsive up to desktop
+| File | Purpose |
+|---|---|
+| `index.html` | The main web page |
+| `config.js` | Configuration — put your Google Sheet URL here |
+| `mockup.html` | Standalone preview with sample data (no sheet required) |
 
 ---
 
 ## Setup
 
-### 1. Deploy the app
+### 1. Create your Google Sheet
 
-Upload `baseball-scout.html` to GitHub Pages (or any static host):
+Set up a sheet with the following columns. **Column order doesn't matter** — the app finds each column by its header name. The first row must be a header row with these exact names (spelling and capitalization must match).
 
-1. Create a GitHub repository
-2. Add `baseball-scout.html` to the repo root
-3. Go to **Settings → Pages → Source** and select your main branch
-4. Your app will be live at `https://yourusername.github.io/your-repo/baseball-scout.html`
+| Column | Type | Notes |
+|---|---|---|
+| Active | Boolean | `TRUE`, `yes`, or `1` to include in dropdown |
+| Tournament | Text | Tournament name shown in the dropdown |
+| Location | Text | Venue / city |
+| Time Limit | Text | e.g. `1:45` |
+| Innings | Integer | e.g. `6` |
+| Mercy Rule | HTML | Supports `<ul>`, `<strong>`, `<p>`, etc. |
+| Pitching Limits | HTML | Supports `<ul>`, `<strong>`, `<p>`, etc. |
+| Balks | Text | e.g. `Enforced` or `Warning first` |
+| Courtesy Runner | Text | e.g. `Pitcher & catcher only` |
+| Extra Inning | HTML | Supports `<ul>`, `<strong>`, `<p>`, etc. |
+| Tie Breaker | HTML | Supports `<ul>`, `<strong>`, `<p>`, etc. |
+| Rules URL | URL | Optional. Link to official rules PDF or page. Leave blank to hide the button. |
+| Notes | HTML | Optional. Anything that doesn't fit elsewhere. Supports `<ul>`, `<strong>`, `<p>`, etc. |
+| Sort Order | Number | Optional. Controls dropdown order (1, 2, 3…). Tournaments without a value appear last. |
+| Start Date | Text | Optional. Tournament start date, e.g. `June 6, 2025`. |
+| End Date | Text | Optional. Tournament end date. If same as start date, only one date is shown. |
+| Dropped Third Strike | HTML | Optional. Enforced or not, and any nuances. |
+| Stealing Rules | HTML | Optional. What stealing is permitted, any restrictions. |
+| Field Type | Text | Optional. `turf`, `grass`, or `mixed`. Displays as a badge in the header. |
+| Substitution Rules | HTML | Optional. Re-entry rules, free substitution, DH rules, etc. Supports rich HTML formatting. |
+| Hotel Name | Text | Optional. Team hotel name. If blank, the hotel banner is hidden. |
+| Hotel Address | Text | Optional. Hotel street address. |
+| Hotel URL | URL | Optional. Link to hotel website. Leave blank to hide the button. |
+| Field Address | Text | Optional. Full street address of the field complex. Used to generate a one-tap directions link. |
+| Guaranteed Games | Number | Optional. Minimum number of games guaranteed. Displays inline with the dates. |
+| Gate Fee | Text | Optional. Admission cost, e.g. `$5 per person` or `Free admission`. Displays in the tournament header. |
+| Number of Teams | Integer | Optional. Total teams in the tournament. Displays as a badge alongside guaranteed games. |
+| Tournament URL | URL | Optional. Link to the tournament's website. Makes the tournament name a clickable link in the header. |
 
-### 2. Set up your Google Sheet
+> **HTML fields:** You can use basic HTML directly in those sheet cells. For example, a Mercy Rule cell might contain:
+> ```html
+> <p><strong>10 runs</strong> after 4 innings<br><strong>8 runs</strong> after 5 innings</p>
+> ```
 
-Create a Google Sheet with the following tab structure for each team. Tab names must follow the exact pattern `TeamName - TabName`.
-
-#### Teams tab (named exactly `Teams`)
-
-Lists all teams. Only teams marked Active will appear in the dropdown.
-
-| Team | Active |
-|---|---|
-| Riverdale Fall Ball | 1 |
-| Lake County Captains | 1 |
-| Toledo Mud Hens | 0 |
-
-- **Active**: `1`, `yes`, `y`, or `true` = shown in dropdown. Anything else = hidden.
-- If the Active column is omitted, all teams are shown.
-
-#### TeamName - Games
-
-Master game log. Drives opponent names, common opponent flags, team record, and stolen base tracking.
-
-| Game | Opponent | Common | Score | Opp Score | Opp SB | Opp CS |
-|---|---|---|---|---|---|---|
-| 1 | Toledo | 0 | 5 | 3 | 2 | 1 |
-| 2 | Lake County | 1 | 2 | 7 | 0 | 0 |
-| 3 | Lake County | 1 | 4 | 4 | 1 | 2 |
-
-- **Common**: `1` = flag this game as a common opponent game for comparison purposes
-- **Score / Opp Score**: used to calculate W-L-T record and run differential. Leave blank if unknown — those games are excluded from the record.
-- **Opp SB**: stolen bases allowed by the pitching staff that game
-- **Opp CS**: runners caught stealing that game. CS% = Opp CS / (Opp SB + Opp CS). Leave blank if not tracked — the stat will show `—` rather than an incorrect zero.
-
-#### TeamName - Pitching
-
-One row per pitcher per outing. The app automatically rolls up multiple outings per jersey number.
-
-| Game | Number | IP | Pitches | Strikes | BB | K |
-|---|---|---|---|---|---|---|
-| 1 | 12 | 4.2 | 68 | 44 | 2 | 5 |
-| 1 | 23 | 2.1 | 34 | 22 | 1 | 3 |
-| 2 | 12 | 3.0 | 51 | 33 | 3 | 4 |
-
-- **IP**: use baseball notation — `4.2` means 4 innings and 2 outs, not 4.2 decimal innings
-- **Game**: must match the Game values in your Games tab for common opponent filtering to work
-
-#### TeamName - Batting
-
-One row per game with team totals.
-
-| Game | AB | R | H | RBI | BB | SO |
-|---|---|---|---|---|---|---|
-| 1 | 28 | 5 | 9 | 4 | 3 | 6 |
-| 2 | 27 | 2 | 5 | 2 | 1 | 8 |
-
-- **Game**: must match the Game values in your Games tab
-
-### 3. Publish your Google Sheet
-
-The app fetches data via Google's CSV export endpoint, which requires the sheet to be published:
+### 2. Publish the sheet as CSV
 
 1. In Google Sheets, go to **File → Share → Publish to web**
-2. Select **Entire Document** and **Web page**
-3. Click **Publish**
+2. In the first dropdown, select your sheet tab
+3. In the second dropdown, select **Comma-separated values (.csv)**
+4. Click **Publish** and copy the URL
 
-> Note: "Published to web" is separate from "Anyone with the link can view." You need both.
+### 3. Add the URL to `config.js`
 
-### 4. Set your sheet ID
+Open `config.js` and replace the placeholder:
 
-Open `config.js` and replace the sheet ID with your own:
-
-```javascript
-const SCOUT_CONFIG = {
-  sheetId: 'YOUR_SHEET_ID_HERE',
-};
+```js
+SHEET_URL: "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/pub?gid=0&single=true&output=csv",
 ```
 
-Find your sheet ID in the Google Sheets URL:
+### 4. Deploy
+
+Upload both `index.html` and `config.js` to the **same folder** on your web host. Any static hosting works — GitHub Pages, Netlify, a school or league website, etc.
+
+---
+
+## Deep Linking to a Specific Tournament
+
+You can link directly to a specific tournament's rules by adding a `?tournament=` parameter to the URL:
 
 ```
-https://docs.google.com/spreadsheets/d/SHEET_ID_IS_HERE/edit
+https://yourusername.github.io/tournament-rules/?tournament=Spring Classic Invitational
 ```
 
-Both `config.js` and `baseball-scout.html` must be in the same folder when deployed.
+When someone opens this link the app will automatically select the tournament and display its rules without any dropdown interaction needed.
+
+**Notes:**
+- The tournament name must match exactly (case-insensitive)
+- Spaces in the URL are fine — browsers handle encoding automatically
+- If the name isn't found, a message is shown and the dropdown remains available
+- The tournament must be marked Active in the sheet to be linkable
 
 ---
 
-## Column Name Flexibility
+## How It Works
 
-Column header names are matched loosely — order doesn't matter and capitalization is ignored. Accepted aliases:
-
-| Field | Accepted names |
-|---|---|
-| Game | `Game`, `Gm`, `G` |
-| Opponent | `Opponent`, `Opp` |
-| Common | `Common`, `Co`, `Flag` |
-| Score | `Score`, `RS`, `Runs Scored`, `Our Score` |
-| Opp Score | `Opp Score`, `RA`, `Runs Allowed`, `Opponent Score`, `Opp Sc` |
-| Opp SB | `Opp SB`, `Opp Steals`, `SB`, `Stolen Base`, `Stolen Bases Allowed`, `SBA` |
-| Opp CS | `Opp CS`, `CS`, `Caught Stealing` |
-| Number | `Number`, `Num`, `Jersey`, `No` |
-| IP | `IP`, `Innings` |
-| Pitches | `Pitches`, `Pitch` |
-| Strikes | `Strikes`, `Strike` |
-| BB | `BB`, `Walks`, `Walk` |
-| K (pitching) | `K`, `Strikeout`, `SO` |
-| AB | `AB`, `At Bat` |
-| R | `R`, `Runs`, `Run` |
-| H | `H`, `Hits`, `Hit` |
-| SO (batting) | `SO`, `Strikeout`, `K` |
+1. On page load, the app fetches the published CSV from Google Sheets
+2. Only rows with `Active = TRUE` appear in the dropdown
+3. When a user selects a tournament and clicks **View Rules**, the rule cards populate below
+4. If a **Rules URL** is provided, a button linking to the official rules document appears at the bottom
+5. If no Rules URL is set for a tournament, that button is hidden automatically
 
 ---
 
-## Report Sections
+## Updating Rules
 
-The generated report includes:
+Since the page reads live from Google Sheets, keeping rules up to date is simple:
 
-1. **Masthead** — team name, W-L-T record, run differential, and per-game run differential
-2. **Season Batting strip** — team AVG, OBP, SO/BB
-3. **Common Opponent Batting strip** — same stats filtered to flagged games *(if applicable)*
-4. **Pitching strip** — staff Strike Rate, BB/K, K/9, CS%
-5. **Common Opponent Pitching strip** — same stats filtered to flagged games *(if applicable)*
-6. **Pitching Staff cards** — per-pitcher breakdown with IP, K, BB, Str%, BB/K, K/9, P/IP, IP/App, and grade dot
-7. **Key Findings** — auto-generated strengths and concerns labeled as Pitching or Batting
+- **Edit a rule** — update the cell in the sheet. Changes appear on the next page load.
+- **Add a tournament** — add a new row and set Active to `TRUE`.
+- **Deactivate a tournament** — set Active to `FALSE` (or delete the row). It will no longer appear in the dropdown.
+- **No code changes needed** for any of the above.
 
 ---
 
-## Grading Scale
+## Previewing Without a Sheet
 
-Each pitcher receives a color-coded dot based on a composite score across K/9, BB/9, BB/K, and Strike%:
-
-| Grade | Color | Score |
-|---|---|---|
-| A | Dark green | 7–8 |
-| B | Medium green | 5–6 |
-| C | Golden yellow | 3–4 |
-| D | Brown | 1–2 |
-| F | Red | 0 |
+Open `mockup.html` in any browser. It uses hardcoded sample data and does not require a Google Sheet or internet connection. Use it to preview layout changes or share with others before the sheet is ready.
 
 ---
 
-## Tech Stack
+## Troubleshooting
 
-- **Vanilla HTML/CSS/JavaScript** — no frameworks, no build step
-- **Google Sheets CSV export** — data source via `/gviz/tq?tqx=out:csv` endpoint
-- No external dependencies at runtime (Google Fonts loaded for typography)
+**Error says "Missing sheet columns: …"**
+- The app couldn't find one or more expected header names in your sheet's first row
+- Check spelling and capitalization exactly match the names in `config.js` — e.g. `Time Limit` not `time limit` or `TimeLimit`
+- Make sure row 1 of your sheet is the header row, not a blank row or data row
+- Check that the URL in `config.js` is correct and was published as CSV (not HTML)
+- Republish the sheet — sometimes the publish step needs to be repeated after changes
+- Open the URL directly in a browser to verify it returns raw CSV text
 
----
+**My edits to the sheet aren't showing up**
+- Google's publishing cache can take a few minutes to refresh
+- Hard-refresh the page (`Ctrl+Shift+R` / `Cmd+Shift+R`) to bypass the browser cache
 
-## Notes
+**The page works locally but not when hosted**
+- Make sure `config.js` is in the same folder as `index.html` on your server
+- Confirm your host serves `.js` files (virtually all do)
 
-- The sheet ID is hardcoded in the file. To use a different sheet, update the `sheetId` variable.
-- Google Sheets has a limit of 200 tabs per spreadsheet (~66 teams with 3 tabs each).
-- Ties in the W-L-T record are supported and only shown when at least one tie exists.
-- All score, SB, and CS fields are optional — missing data shows `—` rather than skewing calculations.
+**A tournament isn't appearing in the dropdown**
+- Verify the Active column for that row contains exactly `TRUE`, `yes`, or `1`
+- Check that the row isn't empty in the Tournament column
