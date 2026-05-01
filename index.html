@@ -681,6 +681,7 @@ async function loadSheet() {
       });
 
     populateDropdown();
+    checkDeepLink();
     setStatus('');
   } catch (err) {
     setStatus('⚠ Could not load sheet data. Check config.js SHEET_URL. (' + err.message + ')', true);
@@ -929,14 +930,12 @@ document.getElementById('view-btn').addEventListener('click', () => {
 loadSheet();
 
 // ── DEEP LINK ─────────────────────────────────────────────────
-// After sheet loads, check for ?tournament= in the URL and
-// auto-select + display that tournament if found.
 function checkDeepLink() {
   const params = new URLSearchParams(window.location.search);
   const requested = (params.get('tournament') || '').trim().toLowerCase();
   if (!requested) return;
 
-  const match = tournaments.findIndex(t => t.name.toLowerCase() === requested);
+  const match = tournaments.findIndex(t => t.name.trim().toLowerCase() === requested);
   if (match === -1) {
     setStatus(`⚠ Tournament "${params.get('tournament')}" not found.`, true);
     return;
@@ -952,13 +951,6 @@ function checkDeepLink() {
   // Show the rules
   showRules(t);
 }
-
-// Patch loadSheet to call checkDeepLink after tournaments populate
-const _origPopulate = populateDropdown;
-populateDropdown = function() {
-  _origPopulate();
-  checkDeepLink();
-};
 </script>
 </body>
 </html>
