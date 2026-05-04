@@ -343,7 +343,7 @@ function aggregateTeam(pitchers, batters, gameData) {
   const totBB      = pitchers.reduce((s,p) => s+p.bb, 0);
   const strikePct  = totPitches > 0 ? totStrikes/totPitches*100 : null;
   const kper9      = totIP > 0 ? totK/totIP*9 : null;
-  const bbk        = totK > 0 ? totBB/totK : null;
+  const bbk        = totBB > 0 ? totK/totBB : null;
 
   // Batting
   const totAB = batters.reduce((s,g) => s+g.ab, 0);
