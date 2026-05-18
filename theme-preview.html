@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Theme Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d0d0d; font-family: 'Barlow', sans-serif; font-size: 16px; color: #e8edf5; padding: 1.5rem 1rem 3rem; }
+    h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #fff; text-align: center; margin-bottom: 2rem; }
+    .themes-wrap { display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; }
+    .theme-col { flex: 1; min-width: 240px; max-width: 300px; }
+    .theme-name { font-family: 'Barlow Condensed', sans-serif; font-size: .82rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; text-align: center; margin-bottom: .6rem; padding: .3rem; border-radius: 6px; }
+    .phone-wrap { border-radius: 14px; overflow: hidden; border: 1px solid; }
+    .mini-header { border-bottom-width: 3px; border-bottom-style: solid; padding: .6rem .85rem .55rem; text-align: center; }
+    .mini-header h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #fff; }
+    .t-title-bar { padding: .7rem .85rem .6rem; }
+    .t-title-bar h3 { font-family: 'Barlow Condensed', sans-serif; font-size: .98rem; font-weight: 800; text-transform: uppercase; color: #fff; line-height: 1.1; }
+    .location-line { font-size: .68rem; color: rgba(255,255,255,.8); margin-top: .14rem; }
+    .dates-line { font-size: .66rem; color: rgba(255,255,255,.9); font-weight: 600; margin-top: .16rem; }
+    .info-row { display: flex; gap: .28rem; flex-wrap: wrap; margin-top: .25rem; }
+    .info-badge { display: inline-flex; align-items: center; gap: .2rem; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; padding: .08rem .4rem; font-size: .6rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: rgba(255,255,255,.95); }
+    .quick-stats { display: grid; grid-template-columns: repeat(3,1fr); }
+    .stat-cell { padding: .55rem .35rem; text-align: center; border-right-width: 1px; border-right-style: solid; }
+    .stat-cell:last-child { border-right: none; }
+    .s-label { font-family: 'Barlow Condensed', sans-serif; font-size: .55rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; display: block; margin-bottom: .12rem; }
+    .s-value { font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; line-height: 1; }
+    .s-sub { font-size: .54rem; margin-top: .1rem; }
+    .rules-body { padding: .6rem; display: flex; flex-direction: column; gap: .45rem; }
+    .rule-card { border-radius: 6px; overflow: hidden; border-width: 1px; border-style: solid; }
+    .rule-card-head { display: flex; align-items: center; gap: .32rem; padding: .38rem .6rem; background: rgba(255,255,255,.04); border-bottom-width: 1px; border-bottom-style: solid; }
+    .rc-label { font-family: 'Barlow Condensed', sans-serif; font-size: .64rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .rule-card-body { padding: .45rem .6rem; font-size: .74rem; line-height: 1.5; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem; }
+    .btn-view { width: 100%; border: none; border-radius: 6px; padding: .5rem; font-family: 'Barlow Condensed', sans-serif; font-size: .84rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; cursor: pointer; margin-top: .6rem; }
+
+    /* original-blue */
+    .t1 .theme-name { background: rgba(56,189,248,.1); color: #38bdf8; border: 1px solid rgba(56,189,248,.3); }
+    .t1 .phone-wrap { border-color: #1e3054; }
+    .t1 .mini-header { background: linear-gradient(135deg,#0a1628,#0d2a4a,#0e3d6e); border-bottom-color: #38bdf8; }
+    .t1 .mini-header h2 span { color: #38bdf8; }
+    .t1 .t-title-bar { background: linear-gradient(90deg,#0ea5e9,#38bdf8); }
+    .t1 .quick-stats { background: #112240; border-left: 1px solid #1e3054; border-right: 1px solid #1e3054; }
+    .t1 .stat-cell { border-right-color: #1e3054; }
+    .t1 .s-label { color: #8899b0; } .t1 .s-value { color: #f5a623; } .t1 .s-sub { color: #8899b0; }
+    .t1 .rules-body { background: #162033; }
+    .t1 .rule-card { background: #112240; border-color: #1e3054; }
+    .t1 .rule-card-head { border-bottom-color: #1e3054; }
+    .t1 .rc-label { color: #8899b0; } .t1 .rule-card-body { color: #e8edf5; }
+    .t1 .rule-card-body strong { color: #f5a623; }
+    .t1 .btn-view { background: #38bdf8; color: #0a1628; }
+
+    /* red-black */
+    .t2 .theme-name { background: rgba(229,62,62,.1); color: #e53e3e; border: 1px solid rgba(229,62,62,.3); }
+    .t2 .phone-wrap { border-color: #2a1515; }
+    .t2 .mini-header { background: linear-gradient(135deg,#0a0a0a,#1a0505,#2d0808); border-bottom-color: #e53e3e; }
+    .t2 .mini-header h2 span { color: #e53e3e; }
+    .t2 .t-title-bar { background: linear-gradient(90deg,#c53030,#e53e3e); }
+    .t2 .quick-stats { background: #1a1010; border-left: 1px solid #2a1515; border-right: 1px solid #2a1515; }
+    .t2 .stat-cell { border-right-color: #2a1515; }
+    .t2 .s-label { color: #a08080; } .t2 .s-value { color: #f5a623; } .t2 .s-sub { color: #a08080; }
+    .t2 .rules-body { background: #111111; }
+    .t2 .rule-card { background: #1a1010; border-color: #2a1515; }
+    .t2 .rule-card-head { border-bottom-color: #2a1515; }
+    .t2 .rc-label { color: #a08080; } .t2 .rule-card-body { color: #e8edf5; }
+    .t2 .rule-card-body strong { color: #f5a623; }
+    .t2 .btn-view { background: #e53e3e; color: #fff; }
+
+    /* light-blue */
+    .t3 .theme-name { background: rgba(147,197,253,.1); color: #93c5fd; border: 1px solid rgba(147,197,253,.3); }
+    .t3 .phone-wrap { border-color: #2a3f5f; }
+    .t3 .mini-header { background: linear-gradient(135deg,#0f172a,#1a2d4a,#1e3a6e); border-bottom-color: #93c5fd; }
+    .t3 .mini-header h2 span { color: #93c5fd; }
+    .t3 .t-title-bar { background: linear-gradient(90deg,#60a5fa,#93c5fd); }
+    .t3 .quick-stats { background: #1e2d47; border-left: 1px solid #2a3f5f; border-right: 1px solid #2a3f5f; }
+    .t3 .stat-cell { border-right-color: #2a3f5f; }
+    .t3 .s-label { color: #7a9abf; } .t3 .s-value { color: #fbbf24; } .t3 .s-sub { color: #7a9abf; }
+    .t3 .rules-body { background: #162036; }
+    .t3 .rule-card { background: #1e2d47; border-color: #2a3f5f; }
+    .t3 .rule-card-head { border-bottom-color: #2a3f5f; }
+    .t3 .rc-label { color: #7a9abf; } .t3 .rule-card-body { color: #e8edf5; }
+    .t3 .rule-card-body strong { color: #fbbf24; }
+    .t3 .btn-view { background: #93c5fd; color: #0f172a; }
+
+    /* orange */
+    .t4 .theme-name { background: rgba(249,115,22,.1); color: #f97316; border: 1px solid rgba(249,115,22,.3); }
+    .t4 .phone-wrap { border-color: #2a1e08; }
+    .t4 .mini-header { background: linear-gradient(135deg,#0a0a0a,#1a0e00,#2d1800); border-bottom-color: #f97316; }
+    .t4 .mini-header h2 span { color: #f97316; }
+    .t4 .t-title-bar { background: linear-gradient(90deg,#ea6b0a,#f97316); }
+    .t4 .quick-stats { background: #1a1208; border-left: 1px solid #2a1e08; border-right: 1px solid #2a1e08; }
+    .t4 .stat-cell { border-right-color: #2a1e08; }
+    .t4 .s-label { color: #a08060; } .t4 .s-value { color: #fbbf24; } .t4 .s-sub { color: #a08060; }
+    .t4 .rules-body { background: #111108; }
+    .t4 .rule-card { background: #1a1208; border-color: #2a1e08; }
+    .t4 .rule-card-head { border-bottom-color: #2a1e08; }
+    .t4 .rc-label { color: #a08060; } .t4 .rule-card-body { color: #e8edf5; }
+    .t4 .rule-card-body strong { color: #fbbf24; }
+    .t4 .btn-view { background: #f97316; color: #fff; }
+
+    /* black-white */
+    .t6 .theme-name { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+    .t6 .phone-wrap { border-color: #2a2a2a; }
+    .t6 .mini-header { background: linear-gradient(135deg,#0a0a0a,#1a1a1a,#222222); border-bottom-color: #ffffff; }
+    .t6 .mini-header h2 span { color: #ffffff; }
+    .t6 .t-title-bar { background: linear-gradient(90deg,#d4d4d4,#ffffff); }
+    .t6 .t-title-bar h3 { color: #0a0a0a; }
+    .t6 .t-title-bar .location-line { color: rgba(0,0,0,.7); }
+    .t6 .t-title-bar .dates-line { color: rgba(0,0,0,.85); }
+    .t6 .t-title-bar .info-badge { background: rgba(0,0,0,.15); border-color: rgba(0,0,0,.25); color: #0a0a0a; }
+    .t6 .t-title-bar h3 { color: #0a0a0a; }
+    .t6 .t-title-bar .location-line { color: rgba(0,0,0,.7); }
+    .t6 .t-title-bar .dates-line { color: rgba(0,0,0,.85); }
+    .t6 .t-title-bar .info-badge { background: rgba(0,0,0,.15); border-color: rgba(0,0,0,.25); color: #0a0a0a; }
+    .t6 .quick-stats { background: #141414; border-left: 1px solid #2a2a2a; border-right: 1px solid #2a2a2a; }
+    .t6 .stat-cell { border-right-color: #2a2a2a; }
+    .t6 .s-label { color: #666; } .t6 .s-value { color: #ffffff; } .t6 .s-sub { color: #666; }
+    .t6 .rules-body { background: #111111; }
+    .t6 .rule-card { background: #141414; border-color: #2a2a2a; }
+    .t6 .rule-card-head { border-bottom-color: #2a2a2a; }
+    .t6 .rc-label { color: #888; } .t6 .rule-card-body { color: #f0f0f0; }
+    .t6 .rule-card-body strong { color: #ffffff; }
+    .t6 .btn-view { background: #ffffff; color: #0a0a0a; }
+    .t5 .phone-wrap { border-color: #2a2800; }
+    .t5 .mini-header { background: linear-gradient(135deg,#0a0a0a,#141200,#1f1c00); border-bottom-color: #facc15; }
+    .t5 .mini-header h2 span { color: #facc15; }
+    .t5 .t-title-bar { background: linear-gradient(90deg,#eab308,#facc15); }
+    .t5 .quick-stats { background: #141400; border-left: 1px solid #2a2800; border-right: 1px solid #2a2800; }
+    .t5 .stat-cell { border-right-color: #2a2800; }
+    .t5 .s-label { color: #807a40; } .t5 .s-value { color: #facc15; } .t5 .s-sub { color: #807a40; }
+    .t5 .rules-body { background: #111100; }
+    .t5 .rule-card { background: #141400; border-color: #2a2800; }
+    .t5 .rule-card-head { border-bottom-color: #2a2800; }
+    .t5 .rc-label { color: #807a40; } .t5 .rule-card-body { color: #e8edf5; }
+    .t5 .rule-card-body strong { color: #facc15; }
+    .t5 .btn-view { background: #facc15; color: #0a0a0a; }
+
+    /* white-black */
+    .t7 .theme-name { background: rgba(26,26,26,.08); color: #1a1a1a; border: 1px solid rgba(26,26,26,.25); }
+    .t7 .phone-wrap { border-color: #d4d4d4; }
+    .t7 .mini-header { background: linear-gradient(135deg,#e8e8e8,#f0f0f0,#f8f8f8); border-bottom-color: #1a1a1a; }
+    .t7 .mini-header h2 { color: #1a1a1a; }
+    .t7 .mini-header h2 span { color: #1a1a1a; }
+    .t7 .t-title-bar { background: linear-gradient(90deg,#333333,#1a1a1a); }
+    .t7 .quick-stats { background: #ebebeb; border-left: 1px solid #d4d4d4; border-right: 1px solid #d4d4d4; }
+    .t7 .stat-cell { border-right-color: #d4d4d4; }
+    .t7 .s-label { color: #666666; } .t7 .s-value { color: #1a1a1a; } .t7 .s-sub { color: #666666; }
+    .t7 .rules-body { background: #f5f5f5; }
+    .t7 .rule-card { background: #ffffff; border-color: #d4d4d4; }
+    .t7 .rule-card-head { background: rgba(0,0,0,.03); border-bottom-color: #d4d4d4; }
+    .t7 .rc-label { color: #666666; } .t7 .rule-card-body { color: #1a1a1a; }
+    .t7 .rule-card-body strong { color: #1a1a1a; }
+    .t7 .btn-view { background: #1a1a1a; color: #ffffff; }
+  </style>
+</head>
+<body>
+<h1>⚾ Theme Preview</h1>
+<div class="themes-wrap">
+
+  <!-- Reusable card template macro (copy for each theme, change class) -->
+
+  <!-- ORIGINAL BLUE -->
+  <div class="theme-col t1">
+    <div class="theme-name">original-blue</div>
+    <div class="phone-wrap">
+      <div class="mini-header"><h2>Tournament <span>Rules</span></h2></div>
+      <div class="t-title-bar"><h3>Spring Classic Invitational</h3><div class="location-line">📍 Riverside Sports Complex</div><div class="dates-line">📅 June 6 → June 8, 2025</div><div class="info-row"><span class="info-badge">🎮 4 guaranteed</span><span class="info-badge">👥 24 teams</span></div></div>
+      <div class="quick-stats"><div class="stat-cell"><span class="s-label">Innings</span><div class="s-value">6</div><div class="s-sub">reg.</div></div><div class="stat-cell"><span class="s-label">Time</span><div class="s-value" style="font-size:.88rem">1:45</div></div><div class="stat-cell"><span class="s-label">Balks</span><div class="s-value" style="font-size:.88rem">Enf.</div></div></div>
+      <div class="rules-body"><div class="two-col"><div class="rule-card"><div class="rule-card-head"><span>🏃</span><span class="rc-label">Courtesy</span></div><div class="rule-card-body">1 per player</div></div><div class="rule-card"><div class="rule-card-head"><span>⚡</span><span class="rc-label">Mercy</span></div><div class="rule-card-body"><strong>15</strong> after 3</div></div></div><div class="rule-card"><div class="rule-card-head"><span>⚾</span><span class="rc-label">Pitching Limits</span></div><div class="rule-card-body"><strong>6 inn</strong>/day · rest after 4+</div></div><button class="btn-view">View Rules</button></div>
+    </div>
+  </div>
+
+  <!-- RED BLACK -->
+  <div class="theme-col t2">
+    <div class="theme-name">red-black</div>
+    <div class="phone-wrap">
+      <div class="mini-header"><h2>Tournament <span>Rules</span></h2></div>
+      <div class="t-title-bar"><h3>Spring Classic Invitational</h3><div class="location-line">📍 Riverside Sports Complex</div><div class="dates-line">📅 June 6 → June 8, 2025</div><div class="info-row"><span class="info-badge">🎮 4 guaranteed</span><span class="info-badge">👥 24 teams</span></div></div>
+      <div class="quick-stats"><div class="stat-cell"><span class="s-label">Innings</span><div class="s-value">6</div><div class="s-sub">reg.</div></div><div class="stat-cell"><span class="s-label">Time</span><div class="s-value" style="font-size:.88rem">1:45</div></div><div class="stat-cell"><span class="s-label">Balks</span><div class="s-value" style="font-size:.88rem">Enf.</div></div></div>
+      <div class="rules-body"><div class="two-col"><div class="rule-card"><div class="rule-card-head"><span>🏃</span><span class="rc-label">Courtesy</span></div><div class="rule-card-body">1 per player</div></div><div class="rule-card"><div class="rule-card-head"><span>⚡</span><span class="rc-label">Mercy</span></div><div class="rule-card-body"><strong>15</strong> after 3</div></div></div><div class="rule-card"><div class="rule-card-head"><span>⚾</span><span class="rc-label">Pitching Limits</span></div><div class="rule-card-body"><strong>6 inn</strong>/day · rest after 4+</div></div><button class="btn-view">View Rules</button></div>
+    </div>
+  </div>
+
+  <!-- LIGHT BLUE -->
+  <div class="theme-col t3">
+    <div class="theme-name">light-blue</div>
+    <div class="phone-wrap">
+      <div class="mini-header"><h2>Tournament <span>Rules</span></h2></div>
+      <div class="t-title-bar"><h3>Spring Classic Invitational</h3><div class="location-line">📍 Riverside Sports Complex</div><div class="dates-line">📅 June 6 → June 8, 2025</div><div class="info-row"><span class="info-badge">🎮 4 guaranteed</span><span class="info-badge">👥 24 teams</span></div></div>
+      <div class="quick-stats"><div class="stat-cell"><span class="s-label">Innings</span><div class="s-value">6</div><div class="s-sub">reg.</div></div><div class="stat-cell"><span class="s-label">Time</span><div class="s-value" style="font-size:.88rem">1:45</div></div><div class="stat-cell"><span class="s-label">Balks</span><div class="s-value" style="font-size:.88rem">Enf.</div></div></div>
+      <div class="rules-body"><div class="two-col"><div class="rule-card"><div class="rule-card-head"><span>🏃</span><span class="rc-label">Courtesy</span></div><div class="rule-card-body">1 per player</div></div><div class="rule-card"><div class="rule-card-head"><span>⚡</span><span class="rc-label">Mercy</span></div><div class="rule-card-body"><strong>15</strong> after 3</div></div></div><div class="rule-card"><div class="rule-card-head"><span>⚾</span><span class="rc-label">Pitching Limits</span></div><div class="rule-card-body"><strong>6 inn</strong>/day · rest after 4+</div></div><button class="btn-view">View Rules</button></div>
+    </div>
+  </div>
+
+  <!-- ORANGE -->
+  <div class="theme-col t4">
+    <div class="theme-name">orange</div>
+    <div class="phone-wrap">
+      <div class="mini-header"><h2>Tournament <span>Rules</span></h2></div>
+      <div class="t-title-bar"><h3>Spring Classic Invitational</h3><div class="location-line">📍 Riverside Sports Complex</div><div class="dates-line">📅 June 6 → June 8, 2025</div><div class="info-row"><span class="info-badge">🎮 4 guaranteed</span><span class="info-badge">👥 24 teams</span></div></div>
+      <div class="quick-stats"><div class="stat-cell"><span class="s-label">Innings</span><div class="s-value">6</div><div class="s-sub">reg.</div></div><div class="stat-cell"><span class="s-label">Time</span><div class="s-value" style="font-size:.88rem">1:45</div></div><div class="stat-cell"><span class="s-label">Balks</span><div class="s-value" style="font-size:.88rem">Enf.</div></div></div>
+      <div class="rules-body"><div class="two-col"><div class="rule-card"><div class="rule-card-head"><span>🏃</span><span class="rc-label">Courtesy</span></div><div class="rule-card-body">1 per player</div></div><div class="rule-card"><div class="rule-card-head"><span>⚡</span><span class="rc-label">Mercy</span></div><div class="rule-card-body"><strong>15</strong> after 3</div></div></div><div class="rule-card"><div class="rule-card-head"><span>⚾</span><span class="rc-label">Pitching Limits</span></div><div class="rule-card-body"><strong>6 inn</strong>/day · rest after 4+</div></div><button class="btn-view">View Rules</button></div>
+    </div>
+  </div>
+
+  <!-- BLACK YELLOW -->
+  <div class="theme-col t5">
+    <div class="theme-name">black-yellow</div>
+    <div class="phone-wrap">
+      <div class="mini-header"><h2>Tournament <span>Rules</span></h2></div>
+      <div class="t-title-bar"><h3>Spring Classic Invitational</h3><div class="location-line">📍 Riverside Sports Complex</div><div class="dates-line">📅 June 6 → June 8, 2025</div><div class="info-row"><span class="info-badge">🎮 4 guaranteed</span><span class="info-badge">👥 24 teams</span></div></div>
+      <div class="quick-stats"><div class="stat-cell"><span class="s-label">Innings</span><div class="s-value">6</div><div class="s-sub">reg.</div></div><div class="stat-cell"><span class="s-label">Time</span><div class="s-value" style="font-size:.88rem">1:45</div></div><div class="stat-cell"><span class="s-label">Balks</span><div class="s-value" style="font-size:.88rem">Enf.</div></div></div>
+      <div class="rules-body"><div class="two-col"><div class="rule-card"><div class="rule-card-head"><span>🏃</span><span class="rc-label">Courtesy</span></div><div class="rule-card-body">1 per player</div></div><div class="rule-card"><div class="rule-card-head"><span>⚡</span><span class="rc-label">Mercy</span></div><div class="rule-card-body"><strong>15</strong> after 3</div></div></div><div class="rule-card"><div class="rule-card-head"><span>⚾</span><span class="rc-label">Pitching Limits</span></div><div class="rule-card-body"><strong>6 inn</strong>/day · rest after 4+</div></div><button class="btn-view">View Rules</button></div>
+    </div>
+  </div>
+
+  <!-- BLACK WHITE -->
+  <div class="theme-col t6">
+    <div class="theme-name">black-white</div>
+    <div class="phone-wrap">
+      <div class="mini-header"><h2>Tournament <span>Rules</span></h2></div>
+      <div class="t-title-bar"><h3>Spring Classic Invitational</h3><div class="location-line">📍 Riverside Sports Complex</div><div class="dates-line">📅 June 6 → June 8, 2025</div><div class="info-row"><span class="info-badge">🎮 4 guaranteed</span><span class="info-badge">👥 24 teams</span></div></div>
+      <div class="quick-stats"><div class="stat-cell"><span class="s-label">Innings</span><div class="s-value">6</div><div class="s-sub">reg.</div></div><div class="stat-cell"><span class="s-label">Time</span><div class="s-value" style="font-size:.88rem">1:45</div></div><div class="stat-cell"><span class="s-label">Balks</span><div class="s-value" style="font-size:.88rem">Enf.</div></div></div>
+      <div class="rules-body"><div class="two-col"><div class="rule-card"><div class="rule-card-head"><span>🏃</span><span class="rc-label">Courtesy</span></div><div class="rule-card-body">1 per player</div></div><div class="rule-card"><div class="rule-card-head"><span>⚡</span><span class="rc-label">Mercy</span></div><div class="rule-card-body"><strong>15</strong> after 3</div></div></div><div class="rule-card"><div class="rule-card-head"><span>⚾</span><span class="rc-label">Pitching Limits</span></div><div class="rule-card-body"><strong>6 inn</strong>/day · rest after 4+</div></div><button class="btn-view">View Rules</button></div>
+    </div>
+  </div>
+
+  <!-- WHITE BLACK -->
+  <div class="theme-col t7">
+    <div class="theme-name">white-black</div>
+    <div class="phone-wrap">
+      <div class="mini-header"><h2>Tournament <span>Rules</span></h2></div>
+      <div class="t-title-bar"><h3>Spring Classic Invitational</h3><div class="location-line">📍 Riverside Sports Complex</div><div class="dates-line">📅 June 6 → June 8, 2025</div><div class="info-row"><span class="info-badge">🎮 4 guaranteed</span><span class="info-badge">👥 24 teams</span></div></div>
+      <div class="quick-stats"><div class="stat-cell"><span class="s-label">Innings</span><div class="s-value">6</div><div class="s-sub">reg.</div></div><div class="stat-cell"><span class="s-label">Time</span><div class="s-value" style="font-size:.88rem">1:45</div></div><div class="stat-cell"><span class="s-label">Balks</span><div class="s-value" style="font-size:.88rem">Enf.</div></div></div>
+      <div class="rules-body"><div class="two-col"><div class="rule-card"><div class="rule-card-head"><span>🏃</span><span class="rc-label">Courtesy</span></div><div class="rule-card-body">1 per player</div></div><div class="rule-card"><div class="rule-card-head"><span>⚡</span><span class="rc-label">Mercy</span></div><div class="rule-card-body"><strong>15</strong> after 3</div></div></div><div class="rule-card"><div class="rule-card-head"><span>⚾</span><span class="rc-label">Pitching Limits</span></div><div class="rule-card-body"><strong>6 inn</strong>/day · rest after 4+</div></div><button class="btn-view">View Rules</button></div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
