@@ -9,7 +9,7 @@ A mobile-friendly web page for looking up baseball tournament rules. Data is pul
 | File | Purpose |
 |---|---|
 | `index.html` | The main web page |
-| `config.js` | Configuration — sheet URL, theme, logo, and column names |
+| `config.js` | Configuration — put your Google Sheet URL here |
 | `mockup.html` | Standalone preview with sample data (no sheet required) |
 
 ---
@@ -77,74 +77,21 @@ Upload both `index.html` and `config.js` to the **same folder** on your web host
 
 ---
 
-## Customization
+## Deep Linking to a Specific Tournament
 
-All visual customization is done in `config.js` — no need to edit `index.html`.
+You can link directly to a specific tournament's rules by adding a `?tournament=` parameter to the URL:
 
-### Page Title
-
-The text shown in the browser tab and when the page is bookmarked:
-
-```js
-PAGE_TITLE: "OV Xpress – Tournament Rules",
+```
+https://yourusername.github.io/tournament-rules/?tournament=Spring Classic Invitational
 ```
 
-### Favicon
+When someone opens this link the app will automatically select the tournament and display its rules without any dropdown interaction needed.
 
-The icon shown in the browser tab and on the home screen when added to a mobile device:
-
-```js
-FAVICON: "apple-touch-icon.png",           // browser tab icon (.png, .ico, or .svg)
-APPLE_TOUCH_ICON: "apple-touch-icon.png",  // iOS/Android home screen icon (optional)
-```
-
-Both accept a filename in the same folder as `index.html` or a full URL. If `APPLE_TOUCH_ICON` is left empty (`""`), it automatically falls back to whatever `FAVICON` is set to. Set `FAVICON` to `""` to let the browser use its default.
-
-### Logo
-
-Set the logo image displayed in the page header:
-
-```js
-LOGO_SRC: "MrXpress.PNG",   // relative path or full URL; set to "" to hide the logo
-LOGO_ALT: "Ohio Valley Xpress Baseball",
-```
-
-`LOGO_SRC` can be a filename in the same folder as `index.html`, or a full URL to an image hosted elsewhere. Set it to an empty string (`""`) to hide the logo entirely.
-
-### Theme
-
-Control the color scheme of the entire page with the `THEME` setting:
-
-```js
-THEME: "original-blue",
-```
-
-**Built-in themes:**
-
-| Value | Description |
-|---|---|
-| `"original-blue"` | Navy background with sky-blue accents (default) |
-| `"red-black"` | Black background with red accents |
-| `"light-blue"` | Deep navy with lighter blue accents |
-| `"orange"` | Black background with orange accents |
-| `"black-yellow"` | Black background with yellow accents |
-| `"black-white"` | Black background with white accents |
-
-**Custom theme:** You can define your own color set instead of using a built-in name. Replace the string value with an object:
-
-```js
-THEME: {
-  name:           "custom",
-  primary:        "#cc0000",  // main accent color (buttons, borders, header underline)
-  primary2:       "#990000",  // darker accent used in hover states and gradients
-  navy:           "#0a0a0a",  // darkest background (page background)
-  navy2:          "#1a1a1a",  // secondary background (stat row, dropdowns)
-  cardBg:         "#111111",  // rule card background
-  border:         "#2a2a2a",  // border color throughout
-  gold:           "#f5a623",  // highlight color for stat values and bold text
-  headerGradient: "linear-gradient(135deg, #0a0a0a 0%, #1a0000 60%, #2a0000 100%)",
-},
-```
+**Notes:**
+- The tournament name must match exactly (case-insensitive)
+- Spaces in the URL are fine — browsers handle encoding automatically
+- If the name isn't found, a message is shown and the dropdown remains available
+- The tournament must be marked Active in the sheet to be linkable
 
 ---
 
